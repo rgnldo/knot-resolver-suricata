@@ -18,7 +18,7 @@
 ####################################################################################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin$PATH
 logger -t "($(basename "$0"))" "$$ Starting Script Execution ($(if [ -n "$1" ]; then echo "$1"; else echo "menu"; fi))"
-VERSION="1.04"
+VERSION="1.05"
 GIT_REPO="unbound-Asuswrt-Merlin"
 GITHUB_DIR="https://raw.githubusercontent.com/rgnldo/$GIT_REPO/master"
 
@@ -82,10 +82,10 @@ welcome_message () {
 				localmd5="$(md5sum "$0" | awk '{print $1}')"
 				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/unbound_installer_v1.0beta.sh" | md5sum | awk '{print $1}')"
 				
-				REMOTEVERSION="$(curl -fsLN --retry 3 "${GITHUB_DIR}/unbound_installer_v1.0beta.sh" | grep -E "^VERSION" | tr -d '"' | sed 's/VERSION\=//')"	# v1.04
+				REMOTE_VERSION_NUM="$(curl -fsLN --retry 3 "${GITHUB_DIR}/unbound_installer_v1.0beta.sh" | grep -E "^VERSION" | tr -d '"' | sed 's/VERSION\=//')"	# v1.05
 				
-				LVERSION=$(echo $VERSION | sed 's/[^0-9]*//g')				# v1.04 
-				RVERSION=$(echo $REMOTEVERSION | sed 's/[^0-9]*//g')		# v1.04
+				LOCAL_VERSION_NUM=$(echo $VERSION | sed 's/[^0-9]*//g')				# v1.04 
+				REMOTE_VERSION_NUM=$(echo $REMOTE_VERSION_NUM | sed 's/[^0-9]*//g')	# v1.04
 				
 				if pidof unbound >/dev/null 2>&1; then
 					printf '%b1%b = Update unbound Configuration\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
@@ -95,10 +95,10 @@ welcome_message () {
 				printf '%b2%b = Remove Existing unbound Installation\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				
 				if [ "$localmd5" != "$remotemd5" ]; then
-					if [ $RVERSION -gt $LVERSION ];then				# v1.04
-						printf '%b3%b = Update unbound_installer.sh %s -> %s\n' "${COLOR_GREEN}" "${COLOR_WHITE}" "v$VERSION" "v$REMOTEVERSION"	# v1.04
+					if [ $REMOTE_VERSION_NUM -gt $LOCAL_VERSION_NUM ];then				# v1.04
+						printf '%b3%b = Update unbound_installer.sh %s -> %s\n' "${COLOR_GREEN}" "${COLOR_WHITE}" "v$VERSION" "v$REMOTE_VERSION_NUM"	# v1.04
 					else
-						printf '%b3 = Downgrade unbound_installer.sh %s <- %s\n' "${COLOR_RED}" "v$VERSION" "v$REMOTEVERSION"	# v1.04
+						printf '%b3 = Downgrade unbound_installer.sh %s <- %s\n' "${COLOR_RED}" "v$VERSION" "v$REMOTE_VERSION_NUM"	# v1.04
 					fi
 				fi
 				[ -n "$(pidof unbound)" ] && printf '\n%bs%b = Display unbound statistics\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
@@ -162,7 +162,7 @@ validate_removal () {
 			esac
 		done
 }
-Chk_Entware () {
+Chk_Entware() {
 		# ARGS [wait attempts] [specific_entware_utility]
 		READY="1"					# Assume Entware Utilities are NOT available
 		ENTWARE_UTILITY=""			# Specific Entware utility to search for
@@ -203,7 +203,7 @@ Chk_Entware () {
 		done
 		return "$READY"
 }
-is_dir_empty () {
+is_dir_empty() {
 		DIR="$1"
 		cd "$DIR" || return 1
 		set -- .[!.]* ; test -f "$1" && return 1
@@ -211,7 +211,7 @@ is_dir_empty () {
 		set -- * ; test -f "$1" && return 1
 		return 0
 }
-check_dnsmasq_parms () {
+check_dnsmasq_parms() {
 		if [ -s "/etc/dnsmasq.conf" ]; then  # dnsmasq.conf file exists
 			for DNSMASQ_PARM in "server=127.0.0.1#53535"; do
 				if grep -q "$DNSMASQ_PARM" "/etc/dnsmasq.conf"; then  # see if line exists
@@ -236,26 +236,17 @@ check_dnsmasq_parms () {
 			exit 1
 		fi
 }
-check_dnsmasq_postconf () {
-		if [ -s "/jffs/scripts/dnsmasq.postconf" ]; then  # dnsmasq.conf file exists
-			for DNSMASQ_PARM in "server=127.0.0.1#53535"; do
-				if grep -q "$DNSMASQ_PARM" "/jffs/scripts/dnsmasq.postconf"; then  # see if line exists
-					printf 'Required dnsmasq parm %b%s%b found in /etc/dnsmasq.conf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
-					continue #line found in dnsmasq.conf, no update required to /jffs/configs/dnsmasq.conf.add
-				fi
-				if [ -s "/jffs/scripts/dnsmasq.postconf" ]; then
-					if grep -q "$DNSMASQ_PARM" "/jffs/scripts/dnsmasq.postconf"; then  # see if line exists
-						printf '%b%s%b found in /jffs/scripts/dnsmasq.postconf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
-					else
-						printf 'Adding %b%s%b to /jffs/scripts/dnsmasq.postconf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
-						printf '%s\n' "$DNSMASQ_PARM" >> /jffs/scripts/dnsmasq.postconf
-					fi
-				else
-					printf 'Adding %b%s%b to /jffs/scripts/dnsmasq.postconf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
-					printf '%s\n' "$DNSMASQ_PARM" > /jffs/scripts/dnsmasq.postconf
-				fi
-			done
-		
+check_dnsmasq_postconf() {
+		if [ -s "/jffs/scripts/dnsmasq.postconf" ]; then  # dnsmasq.postconf file exists		# v1.05
+			if [ "$1" != "del" ];then
+				[ -z "$(grep -E "^pc_delete.*servers\-file" /jffs/scripts/dnsmasq.postconf)" ] && echo -e "\npc_delete \"servers-file\" \$CONFIG\t\t\t# unbound_installer" >> /jffs/scripts/dnsmasq.postconf
+				[ -z "$(grep -E "^pc_delete.*no\-negcache" /jffs/scripts/dnsmasq.postconf)" ] && echo -e "pc_delete \"no-negcache\" \$CONFIG\t\t\t# unbound_installer" >> /jffs/scripts/dnsmasq.postconf
+				[ -z "$(grep -E "^pc_delete.*domain\-needed" /jffs/scripts/dnsmasq.postconf)" ] && echo -e "pc_delete \"domain-needed\" \$CONFIG\t\t\t# unbound_installer" >> /jffs/scripts/dnsmasq.postconf
+				[ -z "$(grep -E "^pc_delete.*bogus-priv" /jffs/scripts/dnsmasq.postconf)" ] && echo -e "pc_delete \"bogus-priv\" \$CONFIG\t\t\t# unbound_installer" >> /jffs/scripts/dnsmasq.postconf
+				echo -e "pc_replace \"cache-size=1500\" \"cache-size=0\" \$CONFIG\t\t\t# unbound_installer" >> /jffs/scripts/dnsmasq.postconf
+			else
+				sed -i '/#.*unbound_installer/d' /jffs/scripts/dnsmasq.postconf
+			fi
 		else
 			{ echo "#!/bin/sh									
 CONFIG=\$1								
@@ -268,7 +259,7 @@ pc_replace \"cache-size=1500\" \"cache-size=0\" \$CONFIG
 pc_append \"server=127.0.0.1#53535\" \$CONFIG"; }			> /jffs/scripts/dnsmasq.postconf
 		fi
 }
-create_required_directories () {
+create_required_directories() {
 		for DIR in  "/opt/etc/unbound" "/opt/var/lib/unbound" "/opt/var/log"; do
 			if [ ! -d "$DIR" ]; then
 				if mkdir -p "$DIR" >/dev/null 2>&1; then
@@ -281,7 +272,7 @@ create_required_directories () {
 			fi
 		done
 }
-make_backup () {
+make_backup() {
 		DIR="$1"
 		FILE="$2"
 		TIMESTAMP="$(date +%Y-%m-%d_%H-%M-%S)"
@@ -297,7 +288,7 @@ make_backup () {
 			fi
 		fi
 }
-download_file () {
+download_file() {
 		DIR="$1"
 		FILE="$2"
 		STATUS="$(curl --retry 3 -sL -w '%{http_code}' "$GITHUB_DIR/$FILE" -o "$DIR/$FILE")"
@@ -309,7 +300,7 @@ download_file () {
 			exit 1
 		fi
 }
-S61unbound_update () {
+S61unbound_update() {
 		if [ -d "/opt/etc/init.d" ]; then
 			/opt/bin/find /opt/etc/init.d -type f -name S61unbound\* | while IFS= read -r "line"; do
 				rm "$line"
@@ -386,7 +377,7 @@ PATH=/opt/sbin:/opt/bin:/opt/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/u
 		
 		chmod 755 /opt/etc/init.d/S02haveged >/dev/null 2>&1
 }
-update_wan_and_resolv_settings () {
+update_wan_and_resolv_settings() {
 		# Update Connect to DNS Server Automatically
 		nvram set wan_dnsenable_x="0"
 		nvram set wan0_dnsenable_x="0"
@@ -506,18 +497,18 @@ update_wan_and_resolv_settings () {
 		echo "sh /jffs/scripts/install_unbound.sh checkipv6 # unbound Installer" >> /jffs/scripts/nat-start
 
 }
-exit_message () {
+exit_message() {
 		rm -rf /tmp/unbound.lock
 		echo
 		exit 0
 }
 
-update_installer () {
+update_installer() {
 	if [ "$localmd5" != "$remotemd5" ]; then
 		download_file /jffs/scripts unbound_installer_v1.0beta.sh
 		#***********************************Temporary hack*************************************************
 		echo -e "\t$FILE --> '/jffs/scripts/unbound_installer.sh'"
-		chmod 755 /jffs/scripts/$FILE;mv /jffs/scripts/$FILE /jffs/scripts/unbound_installer.sh;dos2unix /jffs/scripts/unbound_installer.sh
+		chmod 755 /jffs/scripts/$FILE;mv /jffs/scripts/$FILE /jffs/scripts/unbound_installer_v1.0beta.sh;dos2unix /jffs/scripts/unbound_installer.sh
 		#**************************************************************************************************
 		printf '\nUpdate Complete! %s\n' "$remotemd5"
 	else
@@ -629,7 +620,7 @@ Check_SWAP() {
 	local SWAPSIZE=$(grep "SwapTotal" /proc/meminfo | awk '{print $2}') 
 	[ $SWAPSIZE -gt 0 ] && { echo $SWAPSIZE; return 0;} || { echo $SWAPSIZE; return 1; }
 }
-remove_existing_installation () {
+remove_existing_installation() {
 		echo "Starting removal of unbound"
 		
 		# Remove firewall rules
@@ -693,10 +684,12 @@ remove_existing_installation () {
 			/opt/bin/find /opt/etc/init.d -type f -name S61unbound\* -delete
 		fi
 
-		#remove /jffs/scripts/nat-start
+		# remove /jffs/scripts/nat-start
 		if grep -qF "unbound Installer" /jffs/scripts/nat-start; then
 			sed -i '\~ unbound Installer~d' /jffs/scripts/nat-start
 		fi
+		
+		check_dnsmasq_postconf "del"
 
 		# # Default DNS1 to Cloudflare 1.1.1.1
 		# DNS1="1.1.1.1"
@@ -731,7 +724,7 @@ remove_existing_installation () {
 		read -r "CONFIRM_REBOOT"
 		[ "$CONFIRM_REBOOT" == "Y" ] && { echo -e $COLOR_RED"\a\n\n\tREBOOTing....."; service start_reboot; } || echo -e $COLOR_GREEN"\tReboot ABORTED\n"$COLOR_WHITE
 }
-install_unbound () {
+install_unbound() {
 		if [ -d "/jffs/dnscrypt" ] || [ -f "/opt/sbin/dnscrypt-proxy" ]; then
 			echo "Warning! DNSCrypt installation detected"
 			printf 'Please remove this script to continue installing unbound\n\n'
