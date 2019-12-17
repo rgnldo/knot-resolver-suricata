@@ -20,9 +20,9 @@
 ####################################################################################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin$PATH
 logger -t "($(basename "$0"))" "$$ Starting Script Execution ($(if [ -n "$1" ]; then echo "$1"; else echo "menu"; fi))"
-VERSION="v1.0Beta"
-GIT_REPO="unbound-Installer-Asuswrt-Merlin"
-GITHUB_DIR="https://raw.githubusercontent.com/Martineau/$GIT_REPO/master"
+VERSION="v0.1"
+GIT_REPO="Unbound-Asuswrt-Merlin"
+GITHUB_DIR="https://raw.githubusercontent.com/rgnldo/$GIT_REPO/master"
 
 # Uncomment the line below for debugging
 #set -x
