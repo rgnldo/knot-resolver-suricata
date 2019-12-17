@@ -80,7 +80,7 @@ welcome_message () {
 				menu1="2"
 			else
 				localmd5="$(md5sum "$0" | awk '{print $1}')"
-				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/unbound_installer.sh" | md5sum | awk '{print $1}')"
+				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/unbound_installer_v1.0beta.sh" | md5sum | awk '{print $1}')"
 				if pidof unbound >/dev/null 2>&1; then
 					printf '%b1%b = Update unbound Configuration\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				else
