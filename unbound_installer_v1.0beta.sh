@@ -12,15 +12,13 @@
 # Acknowledgement:
 #  Chk_Entware function provided by Martineau.
 #  Test team: 
-#  Contributors: Xentrk. Adamm & Jack Yaz both forked and updated the original installer to provide support
-#                for HND routers. Adamm also implemented the performance improvements listed below,
-#                and performs ongoing code maintainance.
+#  Contributors: Xentrk. rgnldo
 #
 #
 ####################################################################################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin$PATH
 logger -t "($(basename "$0"))" "$$ Starting Script Execution ($(if [ -n "$1" ]; then echo "$1"; else echo "menu"; fi))"
-VERSION="1.02"
+VERSION="1.03"
 GIT_REPO="unbound-Asuswrt-Merlin"
 GITHUB_DIR="https://raw.githubusercontent.com/rgnldo/$GIT_REPO/master"
 
@@ -517,6 +515,42 @@ update_installer () {
 
 	exit_message
 }
+Redirect_outbound_DNS_requests() {
+
+	logger -t unbound "[*] Updating firewall rules to redirect ALL DNS requests";
+	echo -e "Updating firewall rules to redirect ALL DNS requests"
+	iptables -t nat -D PREROUTING -d "$(nvram get lan_ipaddr)" -p tcp --dport 53 -j REDIRECT --to-port 53535 2>/dev/null
+	iptables -t nat -D PREROUTING -d "$(nvram get lan_ipaddr)" -p udp --dport 53 -j REDIRECT --to-port 53535 2>/dev/null
+	
+	if [ "$1" != "del" ] ;then
+		iptables -t nat -A PREROUTING -d "$(nvram get lan_ipaddr)" -p tcp --dport 53 -j REDIRECT --to-port 53535
+		iptables -t nat -A PREROUTING -d "$(nvram get lan_ipaddr)" -p udp --dport 53 -j REDIRECT --to-port 53535
+	
+		# sh /jffs/scripts/unbound.sh firewall # unbound Firewall Addition
+		if [ -z "$(grep -E "unbound.*# unbound" /jffs/scripts/firewall-start 2>/dev/null | grep -qvE "^#")"]; then
+			[ ! -f /jffs/scripts/firewall-start ] && { echo "#!/bin/sh" > /jffs/scripts/firewall-start; chmod +x /jffs/scripts/firewall-start; }
+			EXEC="sh /jffs/scripts/unbound_installer.sh firewall # unbound Firewall Addition"
+			echo -e "$EXEC" >> /jffs/scripts/firewall-start
+		fi
+	fi
+}
+Stubby_Integration() {
+
+	echo -e "Integrating Stubby with unbound....."
+	opkg install stubby ca-bundle
+	
+	download_file /opt/etc/stubby/ stubby.yml
+	download_file /opt/etc/init.d S62stubby		
+	chmod +x /opt/etc/init.d/S62stubby
+	
+	echo "Adding Stubby 'forward-zone:' in '/opt/etc/unbound/unbound.conf'"
+	
+	# Tricky Hack...as there are TWO uncommented '# forward\-zone:' lines!!!!!!
+	sed -i '1,/# forward\-zone:/s/# forward\-zone:/forward\-zone:/' /opt/etc/unbound/unbound.conf
+	sed -i '/forward\-no\-cache:.*no/aforward-addr: 127\.0\.0\.1@5453 \
+forward-addr: 0::1@5453 \
+forward-first: yes' /opt/etc/unbound/unbound.conf
+}
 Customise_config() {
 
 	 echo "Customising '/opt/etc/unbound/unbound.conf'"
@@ -585,7 +619,11 @@ Check_SWAP() {
 }
 remove_existing_installation () {
 		echo "Starting removal of unbound"
-
+		
+		# Remove firewall rules
+		sed -i '/unbound_installer.sh/d' "/jffs/scripts/firewall-start" >/dev/null 
+		Redirect_outbound_DNS_requests "del"
+		
 		# Kill unbound process
 		pidof unbound | while read -r "spid" && [ -n "$spid" ]; do
 			kill "$spid"
@@ -609,9 +647,9 @@ remove_existing_installation () {
 				fi
 			done
 		fi
-		
-		service restart_dnsmasq >/dev/null 2>&1			# Just in case ctrl-c to prevent reboot!
 
+		service restart_dnsmasq >/dev/null 2>&1			# Just in case reboot is skipped!
+		
 		# Purge unbound directories
 		for DIR in  "/opt/etc/unbound" "/opt/var/lib/unbound"; do
 			if [ -d "$DIR" ]; then
@@ -679,7 +717,7 @@ remove_existing_installation () {
 		echo
 		echo -e "Press$COLOR_RED Y$COLOR_WHITE to$COLOR_RED REBOOT $COLOR_WHITE or press$COLOR_GREEN ENTER to ABORT"
 		read -r "CONFIRM_REBOOT"
-		[ "$CONFIRM_REBOOT" == "Y" ] && { echo -e $COLOR_RED"\a\n\n\tREBOOTing....."; service start_reboot; } || echo -e $COLOR_GREEN"\n\tReboot ABORTED\n"$COLOR_WHITE
+		[ "$CONFIRM_REBOOT" == "Y" ] && { echo -e $COLOR_RED"\a\n\n\tREBOOTing....."; service start_reboot; } || echo -e $COLOR_GREEN"\tReboot ABORTED\n"$COLOR_WHITE
 }
 install_unbound () {
 		if [ -d "/jffs/dnscrypt" ] || [ -f "/opt/sbin/dnscrypt-proxy" ]; then
@@ -754,19 +792,26 @@ install_unbound () {
 		
 		S61unbound_update		
 		Customise_config
+		
+		echo -e "\nDo you want to integrate Stubby with unbound?\n\n\tReply$COLOR_RED 'y' or press$COLOR_GREEN ENTER $COLOR_WHITE to skip"
+		read -r "ANS"
+		[ "$ANS" == "y"  ] && Stubby_Integration	
+		
 		/opt/etc/init.d/S61unbound restart				# Will also restart dnsmasq
 		
 		#service restart_dnsmasq >/dev/null 2>&1	
 		#service restart_firewall >/dev/null 2>&1
-
+		
+		[ -n "$(pidof unbound)" ] && Redirect_outbound_DNS_requests	
+		
 		if pidof unbound >/dev/null 2>&1; then
 			echo "Installation of unbound completed"
 		else
-			echo "Warning! Unsuccesful installation of unbound detected"
-			printf 'Rerun %binstall_unbound.sh%b and select the %bRemove%b option to backout changes\n' "$COLOR_GREEN" "$COLOR_WHITE" "$COLOR_GREEN" "$COLOR_WHITE"
+			echo "Warning! Unsuccessful installation of unbound detected"
+			printf 'Rerun %bunbound_installer.sh%b and select the %bRemove%b option to backout changes\n' "$COLOR_GREEN" "$COLOR_WHITE" "$COLOR_GREEN" "$COLOR_WHITE"
 		fi
 		
-		# CheckCreate Swap file
+		# Check Swap file
 		[ $(Check_SWAP) -eq 0 ] && echo $COLOR_RED"\a\n\tWarning SWAP file is not configured - use amtm to create one!" || echo "Swapfile="$(grep "SwapTotal" /proc/meminfo | awk '{print $2" "$3}')		
 		
 		#	DNSFilter: ON - mode Router 
@@ -791,6 +836,8 @@ Main() { true; } # Syntax that is Atom Shellchecker compatible!
 
 clear
 Check_Lock "$1"
+
+[ "$1" == "firewall" ] && { Redirect_outbound_DNS_requests; exit 0; }		# Called from firewall-start?
 
 welcome_message "$@"
 
