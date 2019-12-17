@@ -3,11 +3,11 @@
 # Script: install_unbound.sh
 # Original Author: Martineau
 # Maintainer:
-# Last Updated Date: 16-Dec-2019
+# Last Updated Date: 17-Dec-2019
 #
 # Description:
 #  Install the unbound DNS over TLS resolver package from Entware on Asuswrt-Merlin firmware.
-#  See https://github.com/Martineau/unbound-Installer-Asuswrt-Merlin for a description of system changes
+#  See https://github.com/rgnldo/Unbound-Asuswrt-Merlin for a description of system changes
 #
 # Acknowledgement:
 #  Chk_Entware function provided by Martineau.
@@ -20,9 +20,10 @@
 ####################################################################################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin$PATH
 logger -t "($(basename "$0"))" "$$ Starting Script Execution ($(if [ -n "$1" ]; then echo "$1"; else echo "menu"; fi))"
-VERSION="v1.0Beta"
-GIT_REPO="unbound-Installer-Asuswrt-Merlin"
-GITHUB_DIR="https://raw.githubusercontent.com/Martineau/$GIT_REPO/master"
+VERSION="1.01"
+GIT_REPO="unbound-Asuswrt-Merlin"
+GITHUB_DIR="https://raw.githubusercontent.com/rgnldo/$GIT_REPO/master"
+
 
 # Uncomment the line below for debugging
 #set -x
@@ -74,14 +75,14 @@ welcome_message () {
 			printf '|                                                                      |\n'
 			printf '| You can also use this script to uninstall unbound to back out the    |\n'
 			printf '| changes made during the installation. See the project repository at  |\n'
-			printf '| %bhttps://github.com/Martineau/unbound-Installer-Asuswrt-Merlin%b        |\n' "$COLOR_GREEN" "$COLOR_WHITE"
+			printf '| %bhttps://github.com/rgnldo/Unbound-Asuswrt-Merlin%b                     |\n' "$COLOR_GREEN" "$COLOR_WHITE"
 			printf '| for helpful tips.                                                    |\n'
 			printf '+======================================================================+\n\n'
 			if [ "$1" = "uninstall" ]; then
 				menu1="2"
 			else
 				localmd5="$(md5sum "$0" | awk '{print $1}')"
-				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/install_unbound.sh" | md5sum | awk '{print $1}')"
+				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/unbound_installer.sh" | md5sum | awk '{print $1}')"
 				if pidof unbound >/dev/null 2>&1; then
 					printf '%b1%b = Update unbound Configuration\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				else
@@ -89,7 +90,7 @@ welcome_message () {
 				fi
 				printf '%b2%b = Remove Existing unbound Installation\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				if [ "$localmd5" != "$remotemd5" ]; then
-					printf '%b3%b = Update install_unbound.sh\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
+					printf '%b3%b = Update unbound_installer.sh\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				fi
 				printf '\n%be%b = Exit Script\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				printf '\n%bOption ==>%b ' "${COLOR_GREEN}" "${COLOR_WHITE}"
@@ -187,7 +188,6 @@ Chk_Entware () {
 		done
 		return "$READY"
 }
-
 is_dir_empty () {
 		DIR="$1"
 		cd "$DIR" || return 1
@@ -196,7 +196,6 @@ is_dir_empty () {
 		set -- * ; test -f "$1" && return 1
 		return 0
 }
-
 check_dnsmasq_parms () {
 		if [ -s "/etc/dnsmasq.conf" ]; then  # dnsmasq.conf file exists
 			for DNSMASQ_PARM in "server=127.0.0.1#53535"; do
@@ -288,9 +287,9 @@ download_file () {
 		FILE="$2"
 		STATUS="$(curl --retry 3 -sL -w '%{http_code}' "$GITHUB_DIR/$FILE" -o "$DIR/$FILE")"
 		if [ "$STATUS" -eq "200" ]; then
-			printf '%b%s%b downloaded successfully\n' "$COLOR_GREEN" "$FILE" "$COLOR_WHITE"
+			printf '\n\t%b%s%b downloaded successfully\n' "$COLOR_GREEN" "$FILE" "$COLOR_WHITE"
 		else
-			printf '%b%s%b download failed with curl error %s\n\n' "\n\t\a$COLOR_RED" "$FILE" "$COLOR_RED" "$STATUS"
+			printf '\n%b%s%b download failed with curl error %s\n\n' "\n\t\a$COLOR_RED" "$FILE" "$COLOR_RED" "$STATUS"
 			printf 'Rerun %binstall_unbound.sh%b and select the %bRemove Existing unbound Installation%b option\n' "$COLOR_GREEN" "$COLOR_WHITE" "$COLOR_GREEN" "$COLOR_WHITE"
 			exit 1
 		fi
@@ -500,10 +499,14 @@ exit_message () {
 
 update_installer () {
 	if [ "$localmd5" != "$remotemd5" ]; then
-		download_file /jffs/scripts install_unbound.sh
+		download_file /jffs/scripts unbound_installer_v1.0beta.sh
+		#***********************************Temporary hack*************************************************
+		echo -e "\t$FILE --> '/jffs/scripts/unbound_installer.sh'"
+		chmod 755 /jffs/scripts/$FILE;mv /jffs/scripts/$FILE /jffs/scripts/unbound_installer.sh;dos2unix /jffs/scripts/unbound_installer.sh
+		#**************************************************************************************************
 		printf '\nUpdate Complete! %s\n' "$remotemd5"
 	else
-		printf '\ninstall_unbound.sh is already the latest version. %s\n' "$localmd5"
+		printf '\nunbound_installer.sh is already the latest version. %s\n' "$localmd5"
 	fi
 
 	exit_message
@@ -518,7 +521,7 @@ Customise_config() {
 	 sed -i 's/# do\-ip6:.*/do\-ip6: yes/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/# do\-udp:.*/do\-udp: yes/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/# do\-tcp:.*/do\-tcp: yes/' /opt/etc/unbound/unbound.conf
-	 
+
 	 sed -i 's/msg\-cache\-slabs:.*/msg\-cache\-slabs: 2/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/rrset\-cache\-slabs:.*/rrset\-cache\-slabs: 2/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/infra\-cache\-slabs:.*/infra\-cache\-slabs: 2/' /opt/etc/unbound/unbound.conf
@@ -528,7 +531,6 @@ Customise_config() {
 	 sed -i 's/# udp\-upstream\-without\-downstream:.*/udp\-upstream\-without\-downstream: yes/' /opt/etc/unbound/unbound.conf
 	 
 	 sed -i 's/# key\-cache\-size:.*/key\-cache\-size: 32m/' /opt/etc/unbound/unbound.conf
-	 
 	 
 	 sed -i 's/prefetch:.*/prefetch: yes/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/prefetch\-key:.*/prefetch\-key: yes/' /opt/etc/unbound/unbound.conf
@@ -571,7 +573,7 @@ control-port: 953' /opt/etc/unbound/unbound.conf
 		echo "Use 'unbound-control stats_noreset' to monitor unbound performance"
 }
 Check_SWAP() {
-	local SWAPSIZE=$(cat /proc/meminfo | grep "SwapTotal" | awk '{print $2}') 
+	local SWAPSIZE=$(grep "SwapTotal" /proc/meminfo | awk '{print $2}') 
 	[ $SWAPSIZE -gt 0 ] && { echo $SWAPSIZE; return 0;} || { echo $SWAPSIZE; return 1; }
 }
 remove_existing_installation () {
@@ -687,7 +689,7 @@ install_unbound () {
 				exit 1
 			fi
 		else
-			echo "You must first install Entware before proceeding"
+			echo "You must first install Entware before proceeding see 'amtm'"
 			printf 'Exiting %s\n' "$(basename "$0")"
 			exit 1
 		fi
@@ -709,7 +711,7 @@ install_unbound () {
 			# fi
 		# done
 		if opkg install unbound-daemon unbound-control unbound-control-setup unbound-anchor --force-downgrade; then
-			echo "unbound successfully installed"
+			echo "unbound Entware packages 'unbound-daemon unbound-control unbound-control-setup unbound-anchor' successfully installed"
 		else
 			echo "An error occurred installing unbound"
 			exit 1
@@ -758,21 +760,21 @@ install_unbound () {
 		fi
 		
 		# CheckCreate Swap file
-		[ $(Check_SWAP) -eq 0 ] && echo $COLOR_RED"\a\n\tWarning SWAP file is not configured - use amtm to create one!" || echo "Swapfile="$(Check_SWAP)		
+		[ $(Check_SWAP) -eq 0 ] && echo $COLOR_RED"\a\n\tWarning SWAP file is not configured - use amtm to create one!" || echo "Swapfile="$(grep "SwapTotal" /proc/meminfo | awk '{print $2" "$3}')		
 		
 		#	DNSFilter: ON - mode Router 
 		if [ $(nvram get dnsfilter_enable_x) -eq 0 ];then 
-			echo -e $COLOR_RED"\a\n\t***ERROR DNS Filter is OFF! - $COLOR_WHITE see LAN->DNSFilter->DNS-based Filtering" 
+			echo -e $COLOR_RED"\a\n\t***ERROR DNS Filter is OFF! - $COLOR_WHITE see http://$(nvram get lan_ipaddr)/DNSFilter.asp Enable DNS-based Filtering" 
 		else
 			#	DNSFilter: ON - Mode Router ? 
-			[ $(nvram get dnsfilter_mode) != "11" ] && echo -e $COLOR_RED"\a\n\t***ERROR DNS Filter is NOT = 'Router'"$COLOR_WHITE
+			[ $(nvram get dnsfilter_mode) != "11" ] && echo -e $COLOR_RED"\a\n\t***ERROR DNS Filter is NOT = 'Router' see http://$(nvram get lan_ipaddr)/DNSFilter.asp"$COLOR_WHITE
 		fi
 		
 		#	Tools/Other WAN DNS local cache: NO # for the FW Merlin development team, it is desirable and safer by this mode. 
-		[ $(nvram get nvram get dns_local_cache) != "0" ] && echo -e $COLOR_RED"\a\n\t***ERROR WAN: Use local caching DNS server as system resolver=YES $COLOR_WHITE see Tools->Other Settings->Advanced Tweaks and Hacks"$COLOR_WHITE
+		[ $(nvram get nvram get dns_local_cache) != "0" ] && echo -e $COLOR_RED"\a\n\t***ERROR WAN: Use local caching DNS server as system resolver=YES $COLOR_WHITE see http://$(nvram get lan_ipaddr)/Tools_OtherSettings.asp ->Advanced Tweaks and Hacks"$COLOR_WHITE
 		
 		#	Configure NTP server Merlin
-		[ $(nvram get ntpd_enable) == "0" ] && echo -e $COLOR_RED"\a\n\t***ERROR Enable local NTP server=NO $COLOR_WHITE see Administration->System"$COLOR_WHITE
+		[ $(nvram get ntpd_enable) == "0" ] && echo -e $COLOR_RED"\a\n\t***ERROR Enable local NTP server=NO $COLOR_WHITE see http://$(nvram get lan_ipaddr)/Advanced_System_Content.asp ->Basic Config"$COLOR_WHITE
 		
 		exit_message
 }
