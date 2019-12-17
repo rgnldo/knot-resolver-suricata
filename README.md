@@ -10,5 +10,4 @@ The install script will:
 
 You can also use this script to uninstall unbound to back out the changes made during the installation. See the project repository at
 https://github.com/rgnldo/Unbound-Asuswrt-Merlin for helpful tips.
-+======================================================================+
 
