@@ -20,7 +20,7 @@
 ####################################################################################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin$PATH
 logger -t "($(basename "$0"))" "$$ Starting Script Execution ($(if [ -n "$1" ]; then echo "$1"; else echo "menu"; fi))"
-VERSION="1.01"
+VERSION="1.02"
 GIT_REPO="unbound-Asuswrt-Merlin"
 GITHUB_DIR="https://raw.githubusercontent.com/rgnldo/$GIT_REPO/master"
 
@@ -64,7 +64,7 @@ welcome_message () {
 		while true; do
 			printf '\n+======================================================================+\n'
 			printf '|  Welcome to the %bunbound-Installer-Asuswrt-Merlin%b installation script |\n' "$COLOR_GREEN" "$COLOR_WHITE"
-			printf '|  Version %s by Martineau                                       |\n' "$VERSION"
+			printf '|  Version %s by Martineau                                           |\n' "$VERSION"
 			printf '|                                                                      |\n'
 			printf '| Requirements: USB drive with Entware installed                       |\n'
 			printf '|                                                                      |\n'
@@ -92,6 +92,8 @@ welcome_message () {
 				if [ "$localmd5" != "$remotemd5" ]; then
 					printf '%b3%b = Update unbound_installer.sh\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				fi
+				[ -n "$(pidof unbound)" ] && printf '\n%bs%b = Display unbound statistics\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
+				
 				printf '\n%be%b = Exit Script\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				printf '\n%bOption ==>%b ' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				read -r "menu1"
@@ -107,6 +109,10 @@ welcome_message () {
 				;;
 				3)
 					update_installer
+					break
+				;;
+			    s)
+					unbound-control stats_noreset
 					break
 				;;
 				e)
@@ -522,6 +528,7 @@ Customise_config() {
 	 sed -i 's/# do\-udp:.*/do\-udp: yes/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/# do\-tcp:.*/do\-tcp: yes/' /opt/etc/unbound/unbound.conf
 
+	 sed -i 's/#num\-threads:.*/num\-threads: 1/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/msg\-cache\-slabs:.*/msg\-cache\-slabs: 2/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/rrset\-cache\-slabs:.*/rrset\-cache\-slabs: 2/' /opt/etc/unbound/unbound.conf
 	 sed -i 's/infra\-cache\-slabs:.*/infra\-cache\-slabs: 2/' /opt/etc/unbound/unbound.conf
