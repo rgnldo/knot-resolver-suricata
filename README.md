@@ -1,5 +1,5 @@
 # Unbound-Asuswrt-Merlin
-Welcome to the unbound-Installer-Asuswrt-Merlin installation script by github.com/MartineauUK
+Welcome to the unbound-Installer-Asuswrt-Merlin installation script by https://github.com/MartineauUK
 
 Requirements: USB drive with Entware installed
 
