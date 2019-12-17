@@ -18,7 +18,7 @@
 ####################################################################################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin$PATH
 logger -t "($(basename "$0"))" "$$ Starting Script Execution ($(if [ -n "$1" ]; then echo "$1"; else echo "menu"; fi))"
-VERSION="1.03"
+VERSION="1.04"
 GIT_REPO="unbound-Asuswrt-Merlin"
 GITHUB_DIR="https://raw.githubusercontent.com/rgnldo/$GIT_REPO/master"
 
@@ -69,7 +69,7 @@ welcome_message () {
 			printf '| The install script will:                                             |\n'
 			printf '|   1. Install the unbound Entware package                             |\n'
 			printf '|   2. Override how the firmware manages DNS                           |\n'
-			printf '|   3. Disable the firmware DNSSEC setting                             |\n'
+			printf '|   3. Optionally Integrate with Stubby                                |\n'
 			printf '|                                                                      |\n'
 			printf '| You can also use this script to uninstall unbound to back out the    |\n'
 			printf '| changes made during the installation. See the project repository at  |\n'
@@ -80,15 +80,26 @@ welcome_message () {
 				menu1="2"
 			else
 				localmd5="$(md5sum "$0" | awk '{print $1}')"
-				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/unbound_installer.sh" | md5sum | awk '{print $1}')"
+				remotemd5="$(curl -fsL --retry 3 "${GITHUB_DIR}/unbound_installer_v1.0beta.sh" | md5sum | awk '{print $1}')"
+				
+				REMOTEVERSION="$(curl -fsLN --retry 3 "${GITHUB_DIR}/unbound_installer_v1.0beta.sh" | grep -E "^VERSION" | tr -d '"' | sed 's/VERSION\=//')"	# v1.04
+				
+				LVERSION=$(echo $VERSION | sed 's/[^0-9]*//g')				# v1.04 
+				RVERSION=$(echo $REMOTEVERSION | sed 's/[^0-9]*//g')		# v1.04
+				
 				if pidof unbound >/dev/null 2>&1; then
 					printf '%b1%b = Update unbound Configuration\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				else
 					printf '%b1%b = Begin unbound Installation Process\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				fi
 				printf '%b2%b = Remove Existing unbound Installation\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
+				
 				if [ "$localmd5" != "$remotemd5" ]; then
-					printf '%b3%b = Update unbound_installer.sh\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
+					if [ $RVERSION -gt $LVERSION ];then				# v1.04
+						printf '%b3%b = Update unbound_installer.sh %s -> %s\n' "${COLOR_GREEN}" "${COLOR_WHITE}" "v$VERSION" "v$REMOTEVERSION"	# v1.04
+					else
+						printf '%b3 = Downgrade unbound_installer.sh %s <- %s\n' "${COLOR_RED}" "v$VERSION" "v$REMOTEVERSION"	# v1.04
+					fi
 				fi
 				[ -n "$(pidof unbound)" ] && printf '\n%bs%b = Display unbound statistics\n' "${COLOR_GREEN}" "${COLOR_WHITE}"
 				
@@ -226,22 +237,22 @@ check_dnsmasq_parms () {
 		fi
 }
 check_dnsmasq_postconf () {
-		if [ -s "/jffs/scripts/dnsmasq.postconfX" ]; then  # dnsmasq.conf file exists
+		if [ -s "/jffs/scripts/dnsmasq.postconf" ]; then  # dnsmasq.conf file exists
 			for DNSMASQ_PARM in "server=127.0.0.1#53535"; do
-				if grep -q "$DNSMASQ_PARM" "/jffs/scripts/dnsmasq.postconfX"; then  # see if line exists
+				if grep -q "$DNSMASQ_PARM" "/jffs/scripts/dnsmasq.postconf"; then  # see if line exists
 					printf 'Required dnsmasq parm %b%s%b found in /etc/dnsmasq.conf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
 					continue #line found in dnsmasq.conf, no update required to /jffs/configs/dnsmasq.conf.add
 				fi
-				if [ -s "/jffs/scripts/dnsmasq.postconfX" ]; then
-					if grep -q "$DNSMASQ_PARM" "/jffs/scripts/dnsmasq.postconfX"; then  # see if line exists
-						printf '%b%s%b found in /jffs/scripts/dnsmasq.postconfX\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
+				if [ -s "/jffs/scripts/dnsmasq.postconf" ]; then
+					if grep -q "$DNSMASQ_PARM" "/jffs/scripts/dnsmasq.postconf"; then  # see if line exists
+						printf '%b%s%b found in /jffs/scripts/dnsmasq.postconf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
 					else
-						printf 'Adding %b%s%b to /jffs/scripts/dnsmasq.postconfX\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
-						printf '%s\n' "$DNSMASQ_PARM" >> /jffs/scripts/dnsmasq.postconfX
+						printf 'Adding %b%s%b to /jffs/scripts/dnsmasq.postconf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
+						printf '%s\n' "$DNSMASQ_PARM" >> /jffs/scripts/dnsmasq.postconf
 					fi
 				else
-					printf 'Adding %b%s%b to /jffs/scripts/dnsmasq.postconfX\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
-					printf '%s\n' "$DNSMASQ_PARM" > /jffs/scripts/dnsmasq.postconfX
+					printf 'Adding %b%s%b to /jffs/scripts/dnsmasq.postconf\n' "${COLOR_GREEN}" "$DNSMASQ_PARM" "${COLOR_WHITE}"
+					printf '%s\n' "$DNSMASQ_PARM" > /jffs/scripts/dnsmasq.postconf
 				fi
 			done
 		
@@ -254,7 +265,7 @@ pc_delete \"no-negcache\" \$CONFIG
 pc_delete \"domain-needed\" \$CONFIG			
 pc_delete \"bogus-priv\" \$CONFIG						
 pc_replace \"cache-size=1500\" \"cache-size=0\" \$CONFIG 
-pc_append \"server=127.0.0.1#53535\" \$CONFIG"; }			> /jffs/scripts/dnsmasq.postconfX
+pc_append \"server=127.0.0.1#53535\" \$CONFIG"; }			> /jffs/scripts/dnsmasq.postconf
 		fi
 }
 create_required_directories () {
@@ -291,7 +302,7 @@ download_file () {
 		FILE="$2"
 		STATUS="$(curl --retry 3 -sL -w '%{http_code}' "$GITHUB_DIR/$FILE" -o "$DIR/$FILE")"
 		if [ "$STATUS" -eq "200" ]; then
-			printf '\n\t%b%s%b downloaded successfully\n' "$COLOR_GREEN" "$FILE" "$COLOR_WHITE"
+			printf '\t%b%s%b downloaded successfully\n' "$COLOR_GREEN" "$FILE" "$COLOR_WHITE"
 		else
 			printf '\n%b%s%b download failed with curl error %s\n\n' "\n\t\a$COLOR_RED" "$FILE" "$COLOR_RED" "$STATUS"
 			printf 'Rerun %binstall_unbound.sh%b and select the %bRemove Existing unbound Installation%b option\n' "$COLOR_GREEN" "$COLOR_WHITE" "$COLOR_GREEN" "$COLOR_WHITE"
@@ -546,8 +557,9 @@ Stubby_Integration() {
 	echo "Adding Stubby 'forward-zone:' in '/opt/etc/unbound/unbound.conf'"
 	
 	# Tricky Hack...as there are TWO uncommented '# forward\-zone:' lines!!!!!!
-	sed -i '1,/# forward\-zone:/s/# forward\-zone:/forward\-zone:/' /opt/etc/unbound/unbound.conf
-	sed -i '/forward\-no\-cache:.*no/aforward-addr: 127\.0\.0\.1@5453 \
+	sed -i '1,/# forward\-zone:/s/# forward\-zone:.*/forward\-zone:/' /opt/etc/unbound/unbound.conf		# v1.04
+	sed -i '/forward\-no\-cache:.*no/aname: \"\.\" \
+forward-addr: 127\.0\.0\.1@5453 \
 forward-addr: 0::1@5453 \
 forward-first: yes' /opt/etc/unbound/unbound.conf
 }
@@ -781,8 +793,8 @@ install_unbound () {
 
 		#update_wan_and_resolv_settings
 
-		if [ -d "/opt/bin" ] && [ ! -L "/opt/bin/install_unbound" ]; then
-			ln -s /jffs/scripts/install_unbound.sh /opt/bin/install_unbound
+		if [ -d "/opt/bin" ] && [ ! -L "/opt/bin/unbound_installer" ]; then
+			ln -s /jffs/scripts/unbound_installer.sh /opt/bin/unbound_installer	# v1.04
 		fi
 			
 		echo "Linking '/opt/etc/unbound/unbound.conf' --> '/opt/var/lib/unbound/unbound.conf'"
@@ -805,14 +817,15 @@ install_unbound () {
 		[ -n "$(pidof unbound)" ] && Redirect_outbound_DNS_requests	
 		
 		if pidof unbound >/dev/null 2>&1; then
-			echo "Installation of unbound completed"
+			echo -e $COLOR_GREEN"\n\n\tInstallation of unbound completed\n\n"		# v1.04
 		else
-			echo "Warning! Unsuccessful installation of unbound detected"
+			echo -e $COLOR_RED"***ERROR Unsuccessful installation of unbound detected"		# v1.04
 			printf 'Rerun %bunbound_installer.sh%b and select the %bRemove%b option to backout changes\n' "$COLOR_GREEN" "$COLOR_WHITE" "$COLOR_GREEN" "$COLOR_WHITE"
 		fi
 		
+		echo -e $COLOR_WHITE"Checking Router Configuration pre-reqs....."	# v1.04
 		# Check Swap file
-		[ $(Check_SWAP) -eq 0 ] && echo $COLOR_RED"\a\n\tWarning SWAP file is not configured - use amtm to create one!" || echo "Swapfile="$(grep "SwapTotal" /proc/meminfo | awk '{print $2" "$3}')		
+		[ $(Check_SWAP) -eq 0 ] && echo -e $COLOR_RED"\a\n\tWarning SWAP file is not configured - use amtm to create one!" || echo -e $COLOR_GREEN"Swapfile="$(grep "SwapTotal" /proc/meminfo | awk '{print $2" "$3}')$COLOR_WHITE	# v1.04		
 		
 		#	DNSFilter: ON - mode Router 
 		if [ $(nvram get dnsfilter_enable_x) -eq 0 ];then 
