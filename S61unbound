@@ -1,0 +1,12 @@
+#!/bin/sh
+export TZ=$(cat /etc/TZ)
+ENABLED=yes
+PROCS=unbound
+ARGS="-c /opt/var/lib/unbound/unbound.conf"
+PREARGS="nohup"
+PRECMD=""
+POSTCMD="service restart_dnsmasq"
+DESC=$PROCS
+PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+. /opt/etc/init.d/rc.func
