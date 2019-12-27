@@ -1,4 +1,7 @@
 #!/bin/sh
+logger -t S02haveged "Starting Haveged entropy $0"
+# set environment PATH to system binaries
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$PATH
 export TZ=$(cat /etc/TZ)
 ENABLED=yes
 PROCS=haveged
