@@ -3,14 +3,10 @@ resolution_type: GETDNS_RESOLUTION_STUB
 dns_transport_list:
   - GETDNS_TRANSPORT_TLS
 tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
-tls_query_padding_blocksize: 128
-edns_client_subnet_private: 1
+tls_query_padding_blocksize: 256
+edns_client_subnet_private : 1
 round_robin_upstreams: 1
-idle_timeout: 9000
-tls_connection_retries: 2
-tls_backoff_time: 900
-timeout: 3000
-appdata_dir: "/opt/var/cache/stubby"
+idle_timeout: 10000
 listen_addresses:
   - 127.0.0.1@5453
   # - 0::1@5453 ## required IPV6 enabled
