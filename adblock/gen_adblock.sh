@@ -43,8 +43,6 @@ echo "Removing temporary files..."
 [ -f $outlist ] && rm -f $outlist
 [ -f $finalist ] && rm -f $finalist
 
-echo "Dowloading root servers DNS..."
-curl -o /opt/var/lib/unbound/root.hints https://www.internic.net/domain/named.cache
 echo "Removing log's files..."
 [ -f /opt/var/lib/unbound/unbound.log ] && rm -f /opt/var/lib/unbound/unbound.log
 echo "Restarting DNS servers..."
