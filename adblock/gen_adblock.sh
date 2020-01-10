@@ -34,7 +34,7 @@ echo "Edit User Custon list of allowed domains..."
 fgrep -vf $permlist $outlist  > $finalist
 
 echo "Generating Unbound adlist....."
-cat $finalist | grep '^0\.0\.0\.0' | awk '{print "local-zone: \""$2"\" static"}' > $adlist
+cat $finalist | grep '^0\.0\.0\.0' | awk '{print "local-zone: \""$2"\" always_nxdomain"}' > $adlist
 numberOfAdsBlocked=$(cat $adlist | wc -l | sed 's/^[ \t]*//')
 echo "$numberOfAdsBlocked suspicious and blocked domains"
 
