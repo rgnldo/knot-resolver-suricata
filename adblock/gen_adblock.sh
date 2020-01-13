@@ -12,15 +12,21 @@ echo "Removing possible temporary files.."
 [ -f $finalist ] && rm -f $finalist
 
 echo "Dowloading StevenBlack Adlist..."
-curl --progress-bar https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+curl --progress-bar https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 echo "Dowloading Disconnect.me 1 Adlist..."
-curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 echo "Dowloading Disconnect.me 2 Adlist..."
-curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 echo "Dowloading Disconnect.me 3 Adlist..."
-curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_malware.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+echo "Dowloading Disconnect.me 4 Adlist..."
+curl --progress-bar https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 echo "Dowloading antipopads Adlist..."
-curl --progress-bar https://raw.githubusercontent.com/Yhonay/antipopads/master/hosts | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+curl --progress-bar https://raw.githubusercontent.com/Yhonay/antipopads/master/hosts | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+echo "Dowloading No Spam Adlist..."
+curl --progress-bar https://hosts-file.net/grm.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+echo "Dowloading No Coin Adlist..."
+curl --progress-bar https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/hosts.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $NF}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 
 echo "Combining User Custom block host..."
 cat /opt/var/lib/unbound/adblock/blockhost >> $tempoutlist
