@@ -27,6 +27,8 @@ echo "Dowloading No Spam Adlist..."
 curl --progress-bar https://hosts-file.net/grm.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 echo "Dowloading No Coin Adlist..."
 curl --progress-bar https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/hosts.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
+echo "Dowloading firstparty trackers Adlist..."
+curl --progress-bar https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt | grep -v "#" | grep -v "::1" | grep -v "0.0.0.0 0.0.0.0" | sed '/^$/d' | sed 's/\ /\\ /g' | awk '{print $2}' | grep -v '^\\' | grep -v '\\$'| sort >> $tempoutlist
 
 echo "Combining User Custom block host..."
 cat /opt/var/lib/unbound/adblock/blockhost >> $tempoutlist
