@@ -6,9 +6,9 @@ vars:
 
   # Holds the address group vars that would be passed in a Signature.
   address-groups:
-    HOME_NET: "[192.168.0.0/16,10.0.0.0/8]"
+    HOME_NET: "[CID_LAN]"
     EXTERNAL_NET: "any"
-    DNS_SERVERS: "[10.0.30.1]"
+    DNS_SERVERS: "[IP_ROUTER]"
     SMTP_SERVERS: "$HOME_NET"
     HTTP_SERVERS: "$HOME_NET"
     SQL_SERVERS: "$HOME_NET"
