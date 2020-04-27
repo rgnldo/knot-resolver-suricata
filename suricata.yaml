@@ -6,9 +6,9 @@ vars:
 
   # Holds the address group vars that would be passed in a Signature.
   address-groups:
-    HOME_NET: "[CID_LAN]"
+    HOME_NET: "[192.168.0.0/16]"
     EXTERNAL_NET: "any"
-    DNS_SERVERS: "[IP_ROUTER]"
+    DNS_SERVERS: "[IP_DNS]"
     SMTP_SERVERS: "$HOME_NET"
     HTTP_SERVERS: "$HOME_NET"
     SQL_SERVERS: "$HOME_NET"
@@ -21,7 +21,7 @@ vars:
     ENIP_CLIENT: "$HOME_NET"
     FTP_SERVERS: "$HOME_NET"
     SSH_SERVERS: "$HOME_NET"
-    AIM_SERVERS: "64.12.24.0/23,64.12.28.0/23,64.12.161.0/24,64.12.163.0/24,64.12.200.0/24,205.188.3.0/24,205.188.5.0/24,205.188.7.0/24,205.188.9.0/24,205.188.153.0/24,205.188.179.0/24,205.188.248.0/24"
+    #AIM_SERVERS: "64.12.24.0/23,64.12.28.0/23,64.12.161.0/24,64.12.163.0/24,64.12.200.0/24,205.188.3.0/24,205.188.5.0/24,205.188.7.0/24,205.188.9.0/24,205.188.153.0/24,205.188.179.0/24,205.188.248.0/24"
 
   # Holds the port group vars that would be passed in a Signature.
   port-groups:
@@ -33,27 +33,26 @@ vars:
     DNP3_PORTS: "20000"
     FILE_DATA_PORTS: "$HTTP_PORTS,110,143"
 
-max-pending-packets: 1024
+#max-pending-packets: 1024
 
 # Runmode the engine should use.
-runmode: autofp
+# runmode: autofp
 
 # If set to auto, the variable is internally switched to 'router' in IPS
 # mode and 'sniffer-only' in IDS mode.
 host-mode: auto
 
 # Specifies the kind of flow load balancer used by the flow pinned autofp mode.
-autofp-scheduler: active-packets
+# autofp-scheduler: active-packets
 
 # Linux high speed capture support
 af-packet:
-  - interface: eth0
-  - interface: br0
+ - interface: eth0   #INSERT_WAN INTERFACE
+defrag: yes
+use-mmap: yes
 
-# Daemon working directory
-daemon-directory: /opt/etc/suricata
-
-default-packet-size: 1514
+netmap:
+ - interface: br0
 
 # The default logging directory.
 default-log-dir: /opt/var/log/suricata
@@ -62,7 +61,7 @@ stats:
   enabled: yes
   # The interval field (in seconds) controls at what interval
   # the loggers are invoked.
-  interval: 8
+  interval: 15
 
 # Configure the type of alert (and other) logging.
 outputs:
@@ -84,7 +83,7 @@ outputs:
         enabled: no
 
   - http-log:
-      enabled: yes
+      enabled: no
       filename: http.log
       append: yes
       extended: yes
@@ -192,78 +191,44 @@ magic-file: /opt/share/misc/magic
 ## Netfilter configuration
 ##
 
-nfq:
-   mode: repeat
-   repeat-mark: 1879048192
-   repeat-mask: 1879048192
-#   bypass-mark: 1
-#   bypass-mask: 1
-#  route-queue: 2
-#  batchcount: 20
-   fail-open: yes
+nflog:
+    # netlink multicast group
+    # (the same as the iptables --nflog-group param)
+    # Group 0 is used by the kernel, so you can't use it
+  - group: 2
+    # netlink buffer size
+    buffer-size: 18432
+    # put default value here
+  - group: default
+    # set number of packet to queue inside kernel
+    qthreshold: 1
+    # set the delay before flushing packet in the queue inside kernel
+    qtimeout: 100
+    # netlink max buffer size
+    max-size: 20000
 
 # Specify a threshold config file
 #threshold-file: /usr/local/etc/suricata/suricata_17402_pppoe1/threshold.config
 
-detect:
-  profile: custom
-  custom-values:
-  toclient-groups: 200
-  toserver-groups: 200
-  sgh-mpm-context: auto
-  inspection-recursion-limit: 3000
+detect-engine:
+  - profile: medium
+  - custom-values:
+      toclient-src-groups: 2
+      toclient-dst-groups: 2
+      toclient-sp-groups: 2
+      toclient-dp-groups: 3
+      toserver-src-groups: 2
+      toserver-dst-groups: 4
+      toserver-sp-groups: 2
+      toserver-dp-groups: 25
+  - sgh-mpm-context: auto
+  - inspection-recursion-limit: 3000
 
-  # If set to yes, the loading of signatures will be made after the capture
-  # is started. This will limit the downtime in IPS mode.
-  delayed-detect: yes
-
-  prefilter:
-    # default prefiltering setting. "mpm" only creates MPM/fast_pattern
-    # engines. "auto" also sets up prefilter engines for other keywords.
-    # Use --list-keywords=all to see which keywords support prefiltering.
-  default: mpm
-
-  # the grouping values above control how many groups are created per
-  # direction. Port whitelisting forces that port to get it's own group.
-  # Very common ports will benefit, as well as ports with many expensive
-  # rules.
-  grouping:
-    #tcp-whitelist: 53, 80, 139, 443, 445, 1433, 3306, 3389, 6666, 6667, 8080
-    #udp-whitelist: 53, 135, 5060
-
-  profiling:
-    # Log the rules that made it past the prefilter stage, per packet
-    # default is off. The threshold setting determines how many rules
-    # must have made it past pre-filter for that rule to trigger the
-    # logging.
-    #inspect-logging-threshold: 200
-    grouping:
-      dump-to-disk: false
-      include-rules: false      # very verbose
-      include-mpm-stats: false
 
 # Suricata is multi-threaded. Here the threading can be influenced.
 threading:
   set-cpu-affinity: no
-  detect-thread-ratio: 1.0
-
-# Luajit has a strange memory requirement, it's 'states' need to be in the
-# first 2G of the process' memory.
-#
-# 'luajit.states' is used to control how many states are preallocated.
-# State use: per detect script: 1 per detect thread. Per output script: 1 per
-# script.
-#luajit:
-#  states: 128
-
-# Multi pattern algorithm
-# The default mpm-algo value of "auto" will use "hs" if Hyperscan is
-# available, "ac" otherwise.
-mpm-algo: auto
-
-# Single pattern algorithm
-# The default of "auto" will use "hs" if available, otherwise "bm".
-spm-algo: auto
+  detect-thread-ratio: 1.5
 
 # Defrag settings:
 defrag:
@@ -289,6 +254,7 @@ vlan:
 
 # Specific timeouts for flows.
 flow-timeouts:
+
   default:
     new: 30
     established: 300
@@ -372,10 +338,10 @@ logging:
 
 # IPS Mode Configuration
 # PCAP
-# pcap:
-#  - interface: auto
-#    checksum-checks: auto
-#    promisc: yes
+pcap:
+  - interface: auto
+    checksum-checks: auto
+    promisc: yes
 
 legacy:
   uricontent: enabled
@@ -385,12 +351,13 @@ default-rule-path: /opt/var/lib/suricata/rules
 rule-files:
    - botcc.rules
    - botcc.portgrouped.rules
-   - ciarmy.rules
+   - emerging-worm.rules
    - compromised.rules
    - drop.rules
    - dshield.rules
    - emerging-malware.rules
    - emerging-misc.rules
+  # - ciarmy.rules
   # - teste.rules
   # - emerging-worm.rules
   # - tor.rules
@@ -409,6 +376,12 @@ rule-files:
 classification-file: /opt/etc/suricata/classification.config
 reference-config-file: /opt/etc/suricata/reference.config
 threshold-file: /opt/etc/suricata/threshold.config
+
+action-order:
+   - pass
+   - drop
+   - reject
+   - alert
 
 # IP Reputation
 
@@ -472,35 +445,32 @@ app-layer:
 
 ###########################################################################
 # Configure libhtp.
-libhtp:
-    default-config:
+      libhtp:
+         default-config:
            personality: IDS
-
            # Can be specified in kb, mb, gb.  Just a number indicates
            # it's in bytes.
-           request-body-limit: 0
-           response-body-limit: 0
-
-           # response body decompression (0 disables)
-           response-body-decompress-layer-limit: 2
-
+           request-body-limit: 2mb
+           response-body-limit: 2mb
+           # inspection limits
+           request-body-minimal-inspect-size: 32kb
+           request-body-inspect-window: 4kb
+           response-body-minimal-inspect-size: 32kb
+           response-body-inspect-window: 4kb
            # auto will use http-body-inline mode in IPS mode, yes or no set it statically
            http-body-inline: auto
-
            # Take a random value for inspection sizes around the specified value.
            # This lower the risk of some evasion technics but could lead
            # detection change between runs. It is set to 'yes' by default.
-           randomize-inspection-sizes: yes
+           #randomize-inspection-sizes: yes
            # If randomize-inspection-sizes is active, the value of various
            # inspection size will be choosen in the [1 - range%, 1 + range%]
            # range
            # Default value of randomize-inspection-range is 10.
-           randomize-inspection-range: 10
-
+           #randomize-inspection-range: 10
            # decoding
            double-decode-path: no
            double-decode-query: no
-
     ntp:
       enabled: yes
     dhcp:
