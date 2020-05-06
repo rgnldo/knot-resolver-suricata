@@ -349,14 +349,14 @@ rule-files:
    - dshield.rules
    - emerging-malware.rules
    - emerging-misc.rules
+   - emerging-dns.rules
+   - emerging-dos.rules
   # - ciarmy.rules
   # - teste.rules
   # - emerging-worm.rules
   # - tor.rules
   # - emerging-attack_response.rules
   # - emerging-shellcode.rules
-  # - emerging-dns.rules
-  # - emerging-dos.rules
   # - emerging-exploit.rules
   # - emerging-trojan.rules
   # - emerging-web_client.rules
