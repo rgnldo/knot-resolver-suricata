@@ -21,17 +21,12 @@ vars:
     ENIP_CLIENT: "$HOME_NET"
     FTP_SERVERS: "$HOME_NET"
     SSH_SERVERS: "$HOME_NET"
-    #AIM_SERVERS: "64.12.24.0/23,64.12.28.0/23,64.12.161.0/24,64.12.163.0/24,64.12.200.0/24,205.188.3.0/24,205.188.5.0/24,205.188.7.0/24,205.188.9.0/24,205.188.153.0/24,205.188.179.0/24,205.188.248.0/24"
+  
+# Runmode the engine should use.
+runmode: autofp
 
-  # Holds the port group vars that would be passed in a Signature.
-  port-groups:
-    FTP_PORTS: "21"
-    HTTP_PORTS: "80"
-    ORACLE_PORTS: "1521"
-    SSH_PORTS: "8222"
-    SHELLCODE_PORTS: "!80"
-    DNP3_PORTS: "20000"
-    FILE_DATA_PORTS: "$HTTP_PORTS,110,143"
+# Specifies the kind of flow load balancer used by the flow pinned autofp mode.
+autofp-scheduler: active-packets
 
 # If set to auto, the variable is internally switched to 'router' in IPS
 # mode and 'sniffer-only' in IDS mode.
@@ -39,12 +34,14 @@ host-mode: auto
 
 # Linux high speed capture support
 af-packet:
- - interface: -> insert your interface wan
+ - interface:   ### set your interface wan
 defrag: yes
 use-mmap: yes
 
 netmap:
  - interface: br0
+
+max-pending-packets: 1024
 
 # The default logging directory.
 default-log-dir: /opt/var/log/suricata
@@ -53,12 +50,12 @@ stats:
   enabled: yes
   # The interval field (in seconds) controls at what interval
   # the loggers are invoked.
-  interval: 15
+  interval: 8
 
 # Configure the type of alert (and other) logging.
 outputs:
 
-  # a line based alerts log similar to Snort's fast.log
+# a line based alerts log similar to Snort's fast.log
   - fast:
       enabled: yes
       filename: fast.log
@@ -67,7 +64,7 @@ outputs:
 
   # alert output for use with Barnyard2
   - unified2-alert:
-      enabled: no
+      enabled: yes
       filename: unified2.alert
       limit: 32mb
       sensor-id: 0
@@ -131,7 +128,7 @@ outputs:
       #force-hash: [md5]
 
   - dns-log:
-      enabled: no
+      enabled: yes
       filename: dns.log
       append: yes
       filetype: regular
@@ -176,6 +173,8 @@ outputs:
         - drop:
             alerts: yes
             flows: all
+
+decoder-events-prefix: "decoder.event"
 
 # Magic file. The extension .mgc is added to the value here.
 magic-file: /opt/share/misc/magic
@@ -349,8 +348,8 @@ rule-files:
    - dshield.rules
    - emerging-malware.rules
    - emerging-misc.rules
-   - emerging-dns.rules
    - emerging-dos.rules
+   - emerging-dns.rules
   # - ciarmy.rules
   # - teste.rules
   # - emerging-worm.rules
