@@ -6,7 +6,7 @@ vars:
 
   # Holds the address group vars that would be passed in a Signature.
   address-groups:
-    HOME_NET: "[192.168.0.0/16]"
+    HOME_NET: "[192.168.0.0/16]" ## set your CID IP LAN
     EXTERNAL_NET: "any"
     DNS_SERVERS: "[IP_DNS]"
     SMTP_SERVERS: "$HOME_NET"
@@ -21,6 +21,16 @@ vars:
     ENIP_CLIENT: "$HOME_NET"
     FTP_SERVERS: "$HOME_NET"
     SSH_SERVERS: "$HOME_NET"
+    
+ # Holds the port group vars that would be passed in a Signature.
+  port-groups:
+    FTP_PORTS: "21"
+    HTTP_PORTS: "80"
+    ORACLE_PORTS: "1521"
+    SSH_PORTS: "8222"
+    SHELLCODE_PORTS: "!80"
+    DNP3_PORTS: "20000"
+    FILE_DATA_PORTS: "$HTTP_PORTS,110,143"   
   
 # Runmode the engine should use.
 runmode: autofp
@@ -34,7 +44,7 @@ host-mode: auto
 
 # Linux high speed capture support
 af-packet:
- - interface:   ### set your interface wan
+ - interface:  ## set your wan interface
 defrag: yes
 use-mmap: yes
 
@@ -64,7 +74,7 @@ outputs:
 
   # alert output for use with Barnyard2
   - unified2-alert:
-      enabled: yes
+      enabled: no
       filename: unified2.alert
       limit: 32mb
       sensor-id: 0
@@ -116,8 +126,6 @@ outputs:
       enabled: no
       log-dir: files
       force-magic: no
-      #force-hash: [md5]
-      #waldo: file.waldo
 
   - file-log:
       enabled: no
@@ -128,51 +136,32 @@ outputs:
       #force-hash: [md5]
 
   - dns-log:
-      enabled: yes
+      enabled: no
       filename: dns.log
       append: yes
       filetype: regular
 
   - eve-log:
-      enabled: no
-      type: file
-      #redis:
-       # server: 127.0.0.1
-       # port: 6379
-       # mode: list
-       # key: "suricata"
-      filename: eve.json
-      #identity: "suricata"
-      #facility: local1
-      #level: info
+      enabled: yes
+      filetype: regular
+      filename: eve-%Y-%m-%d-%H:%M.json
+
       types:
         - alert:
-            payload: yes           # enable dumping payload in Base64
-            payload-printable: yes # enable dumping payload in printable (lossy) format
-            packet: yes            # enable dumping of packet (without stream segments)
-            http: yes              # enable dumping of http fields
-            tls: yes               # enable dumping of tls fields
-            ssh: yes               # enable dumping of ssh fields
-            smtp: yes              # enable dumping of smtp fields
-            dnp3: yes              # enable dumping of DNP3 fields
-            tagged-packets: yes    # enable logging of tagged packets
-        - http:
-            extended: yes
-        - dns:
-            query: yes
-            answer: yes
-        - tls:
-            extended: yes
-        - files:
-            force-magic: no
-        - ssh
-        - smtp:
-            extended: yes
-            custom: [received, x-mailer, x-originating-ip, relays, reply-to, bcc]
-            md5: [subject]
+          tagged-packets: yes
+          app-layer: true
+          flow: true
+          rule: true
+          metadata: true
+          raw: false
+
         - drop:
-            alerts: yes
-            flows: all
+          alerts: yes
+          flows: all
+
+        # - http
+        # - dns
+        # - tls
 
 decoder-events-prefix: "decoder.event"
 
@@ -351,7 +340,7 @@ rule-files:
    - emerging-dos.rules
    - emerging-dns.rules
   # - ciarmy.rules
-  # - teste.rules
+  # - test.rules
   # - emerging-worm.rules
   # - tor.rules
   # - emerging-attack_response.rules
