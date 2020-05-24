@@ -328,22 +328,16 @@ rule-files:
    - drop.rules
    - dshield.rules
    - emerging-malware.rules
-   - emerging-misc.rules
    - emerging-dos.rules
    - emerging-dns.rules
-  # - ciarmy.rules
-  # - test.rules
-  # - emerging-worm.rules
-  # - tor.rules
-  # - emerging-attack_response.rules
-  # - emerging-shellcode.rules
-  # - emerging-exploit.rules
-  # - emerging-trojan.rules
-  # - emerging-web_client.rules
-  # - emerging-web_server.rules
-  ##
-  ## Auxiliary configuration files.
-  ##
+   - ciarmy.rules
+   - emerging-misc.rules
+   - emerging-scan.rules
+   - emerging-icmp.rules
+   - emerging-user_agents.rules
+   - emerging-policy.rules
+   - emerging-ftp.rules
+   - emerging-games.rules
 
 classification-file: /opt/etc/suricata/classification.config
 reference-config-file: /opt/etc/suricata/reference.config
