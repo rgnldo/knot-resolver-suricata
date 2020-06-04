@@ -37,7 +37,7 @@ runmode: workers
 
 # If set to auto, the variable is internally switched to 'router' in IPS
 # mode and 'sniffer-only' in IDS mode.
-host-mode: router
+host-mode: auto
 
 # Linux high speed capture support
 af-packet:
