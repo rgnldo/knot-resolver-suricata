@@ -42,13 +42,16 @@ host-mode: auto
 # Linux high speed capture support
 af-packet:
  - interface:  ## set your wan interface
-copy-mode: ips
-copy-iface: br0
-defrag: yes
-use-mmap: yes
 
-netmap:
- - interface: br0
+# IPS Mode Configuration
+# PCAP
+pcap:
+  - interface: auto
+    checksum-checks: auto
+    promisc: yes
+
+legacy:
+  uricontent: enabled
 
 max-pending-packets: 1024
 
