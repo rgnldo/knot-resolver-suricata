@@ -42,7 +42,7 @@ host-mode: auto
 # Linux high speed capture support
 af-packet:
  - interface:  ## set your wan interface
-
+ - interface: br0
 # IPS Mode Configuration
 # PCAP
 pcap:
