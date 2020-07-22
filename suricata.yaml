@@ -325,19 +325,23 @@ default-rule-path: /opt/var/lib/suricata/rules
 rule-files:
    - botcc.rules
    - botcc.portgrouped.rules
-   - emerging-worm.rules
    - compromised.rules
    - drop.rules
    - dshield.rules
    - emerging-malware.rules
+   - emerging-mobile_malware.rules
+   - emerging-worm.rules
    - emerging-dos.rules
    - emerging-dns.rules
    - ciarmy.rules
    - emerging-misc.rules
    - emerging-scan.rules
+   - emerging-icmp_info.rules 
    - emerging-icmp.rules
    - emerging-user_agents.rules
    - emerging-policy.rules
+   - emerging-attack_response.rules
+   - emerging-scan.rules 
    - emerging-ftp.rules
    - emerging-games.rules
 
@@ -345,11 +349,11 @@ classification-file: /opt/etc/suricata/classification.config
 reference-config-file: /opt/etc/suricata/reference.config
 threshold-file: /opt/etc/suricata/threshold.config
 
-action-order:
-   - pass
-   - drop
-   - reject
-   - alert
+# action-order:
+#   - pass
+#   - drop
+#   - reject
+#   - alert
 
 # Limit for the maximum number of asn1 frames to decode (default 256)
 asn1-max-frames: 256
