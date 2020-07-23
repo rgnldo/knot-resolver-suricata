@@ -340,8 +340,7 @@ rule-files:
    - emerging-icmp.rules
    - emerging-user_agents.rules
    - emerging-policy.rules
-   - emerging-attack_response.rules
-   - emerging-scan.rules 
+   - emerging-attack_response.rules 
    - emerging-ftp.rules
    - emerging-games.rules
 
