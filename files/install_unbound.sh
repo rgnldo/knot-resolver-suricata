@@ -5,16 +5,16 @@ SCRIP_DIR="/jffs/scripts/"
 echo "Installing unbound and suricata with Entware.."
 opkg update
 opkg install \
-  dos2unix \
-	unbound-daemon \
-	coreutils-nproc \
-	unbound-control \
-	unbound-control-setup \
-  unbound-anchor \
-	unbound-checkconf \
-	haveged \
-	fake-hwclock \
-  ca-bundle
+   dos2unix \
+   unbound-daemon \
+   coreutils-nproc \
+   unbound-control \
+   unbound-control-setup \
+   unbound-anchor \
+   unbound-checkconf \
+   haveged \
+   fake-hwclock \
+   ca-bundle
 
 echo "Setting unbound..."
 mkdir /opt/var/lib/unbound
