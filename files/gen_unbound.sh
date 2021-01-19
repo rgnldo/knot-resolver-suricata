@@ -1,4 +1,13 @@
 #!/bin/sh
+
+echo -e "\e[96m
++--------------------------------------------------------------------+
+|                                                                    |
+|                 Unbound.conf generator by @rgnldo                  |
+|                                                                    |
++--------------------------------------------------------------------+\033[0;39m"
+sleep 2
+
 logger -t gen_unbound.sh "Starting script generator unbound.conf $0"
 echo "Removing unbound.conf files.."
 [ -f /opt/var/lib/unbound/unbound.conf ] && rm -f /opt/var/lib/unbound/unbound.conf
