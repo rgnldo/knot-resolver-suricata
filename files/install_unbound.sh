@@ -1,7 +1,8 @@
 #! /bin/sh
-CONFIG_DIR="/opt/var/lib/unbound/"
+CONFIG_DIR="/opt/var/lib/unbound"
+SCRIP_DIR="/opt/var/lib/unbound/local"
+ADS_DIR="/opt/var/lib/unbound/zones"
 EXEC_DIR="/opt/etc/init.d/"
-SCRIP_DIR="/jffs/scripts/"
 echo "Installing unbound and suricata with Entware.."
 opkg update
 opkg install \
@@ -18,6 +19,8 @@ opkg install \
 
 echo "Setting unbound..."
 mkdir /opt/var/lib/unbound
+mkdir /opt/var/lib/unbound/local
+mkdir /opt/var/lib/unbound/zones
 chown nobody /opt/var/lib/unbound
 /opt/sbin/unbound-anchor -a ${CONFIG_DIR}root.key
 unbound-control-setup
@@ -37,12 +40,12 @@ chmod 755 ${EXEC_DIR}S61unbound
 dos2unix ${EXEC_DIR}S61unbound
 chmod 755 ${SCRIP_DIR}ini_unbound.sh
 dos2unix ${SCRIP_DIR}ini_unbound.sh
-chmod 755 ${EXEC_DIR}gen_unbound.sh
-dos2unix ${EXEC_DIR}gen_unbound.sh
-chmod 755 ${EXEC_DIR}gen_adblock.sh
-dos2unix ${EXEC_DIR}gen_adblock.sh
+chmod 755 ${SCRIP_DIR}gen_unbound.sh
+dos2unix ${SCRIP_DIR}gen_unbound.sh
+chmod 755 ${SCRIP_DIR}gen_adblock.sh
+dos2unix ${SCRIP_DIR}gen_adblock.sh
 
 echo "start services..."
-sh ${EXEC_DIR}gen_unbound.sh
-sh ${EXEC_DIR}gen_adblock.sh
+sh ${SCRIP_DIR}gen_unbound.sh
+sh ${SCRIP_DIR}gen_adblock.sh
 /opt/etc/init.d/rc.unslung restart
