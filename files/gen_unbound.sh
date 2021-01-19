@@ -98,8 +98,8 @@ server:
 
     rpz:
     name: gen_adblock.rpz
-    master: Gen_adblock.zone
-    zonefile: zones/rpz.db
+    master: gen_adblock.zone
+    zonefile: zones/gen_adblock.rpz
     rpz-action-override: nxdomain
     rpz-log: yes
     rpz-log-name:"gen_adblock policy"
