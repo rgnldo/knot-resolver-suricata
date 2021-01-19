@@ -49,19 +49,10 @@ server:
 
     # RFC1918 private IP address - Protects against DNS Rebinding
     private-address: 10.0.0.0/8
-    private-address: ::ffff:a00:0/104
     private-address: 172.16.0.0/12
-    private-address: ::ffff:ac10:0/108
     private-address: 169.254.0.0/16
-    private-address: ::ffff:a9fe:0/112
     private-address: 192.168.0.0/16
-    private-address: ::ffff:c0a8:0/112
-    private-address: fd00::/8
-    private-address: fe80::/10
-
-    # perform a query against AAAA record exists
-    # module-config: "dns64 validator iterator"
-    # dns64-prefix: 64:FF9B::/96
+    
     module-config: "respip validator iterator"
 
     # Memory cache and responsive performance
@@ -69,17 +60,13 @@ server:
     key-cache-size: @KEY_CACHE_SIZE@
     msg-cache-size: @MSG_CACHE_SIZE@
     rrset-cache-size: @RR_CACHE_SIZE@
-    msg-cache-slabs: 4
-    rrset-cache-slabs: 4
-    infra-cache-slabs: 4
-    key-cache-slabs: 4
-    ip-ratelimit-size: 4m
-    ip-ratelimit-slabs: 4
+    msg-cache-slabs: 2
+    rrset-cache-slabs: 2
+    infra-cache-slabs: 2
+    key-cache-slabs: 2
     prefetch: yes
     prefetch-key: yes
     serve-expired: yes
-    fast-server-permil: 0
-    fast-server-num: 3
 
     # Privacy & security
     hide-version: yes
@@ -88,8 +75,6 @@ server:
     minimal-responses: yes
     rrset-roundrobin: yes
     harden-glue: yes
-    harden-dnssec-stripped: yes
-    trust-anchor-signaling: yes
 
     # Self jail Unbound with user "nobody" to /var/lib/unbound
     username: "nobody"
