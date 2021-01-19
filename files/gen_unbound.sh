@@ -16,8 +16,7 @@ if [ ! -f /opt/var/lib/unbound/unbound.conf ]; then
         > /opt/var/lib/unbound/unbound.conf << EOT
 server:
     # Interface and port answer
-    interface: 0.0.0.0@53
-    # interface: ::0@53
+    interface: 127.0.0.1@53535 
 
     access-control: 0.0.0.0/0 allow
     outgoing-interface: 0.0.0.0
@@ -97,9 +96,6 @@ server:
     # DNSSEC & certificates
     auto-trust-anchor-file: "root.key"
     tls-cert-bundle: "/etc/ssl/cert.pem"
-
-    # Adblock blacklist
-    # include: "adblock/adservers.zone"
 
     remote-control:
     control-enable: yes
