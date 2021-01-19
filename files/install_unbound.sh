@@ -1,9 +1,18 @@
 #! /bin/sh
+
+echo -e "\e[96m
++----------------------------------------------------------------------+
+|                                                                      |
+|                   Installer for Unbound by @rgnldo.                  |
+|                                                                      |
++--------------------------------------------------------------------+\033[0;39m"
+sleep 2
+
 CONFIG_DIR="/opt/var/lib/unbound"
 SCRIP_DIR="/opt/var/lib/unbound/local"
 ADS_DIR="/opt/var/lib/unbound/zones"
 EXEC_DIR="/opt/etc/init.d/"
-echo "Installing unbound and suricata with Entware.."
+echo "Installing unbound with Entware.."
 opkg update
 opkg install \
    dos2unix \
