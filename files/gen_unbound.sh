@@ -19,9 +19,9 @@ echo "Removing unbound.conf files.."
 if [ ! -f /opt/var/lib/unbound/unbound.conf ]; then
     sed \
         -e "s/@THREADS@/1/" \
-        -e "s/@MSG_CACHE_SIZE@/16m/" \
-        -e "s/@RR_CACHE_SIZE@/16m/" \
-        -e "s/@KEY_CACHE_SIZE@/32m/" \
+        -e "s/@MSG_CACHE_SIZE@/30m/" \
+        -e "s/@RR_CACHE_SIZE@/30m/" \
+        -e "s/@KEY_CACHE_SIZE@/64m/" \
         > /opt/var/lib/unbound/unbound.conf << EOT
 server:
     # Interface and port answer
