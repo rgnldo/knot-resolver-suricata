@@ -1,0 +1,56 @@
+tls_ca_file: "/etc/ssl/certs/ca-certificates.crt"
+resolution_type: GETDNS_RESOLUTION_STUB
+dns_transport_list:
+  - GETDNS_TRANSPORT_TLS
+tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
+tls_query_padding_blocksize: 128
+edns_client_subnet_private : 1
+round_robin_upstreams: 1
+idle_timeout: 2000
+tls_connection_retries: 5
+tls_backoff_time: 900
+timeout: 2000
+
+listen_addresses:
+  - 127.0.0.1@5300
+
+upstream_recursive_servers:
+# CloudFlare servers
+  - address_data: 1.1.1.1
+    tls_auth_name: "cloudflare-dns.com"
+
+# DNSforge
+  - address_data: 176.9.93.198
+    tls_auth_name: "dnsforge.de"
+
+# DNS.sb
+  - address_data: 185.222.222.222
+    tls_auth_name: "dns.sb"
+    
+# NextDNS
+  - address_data: 45.90.28.241
+    tls_auth_name: "dns.nextdns.io"
+    
+# NIC cl
+  - address_data: 200.1.123.46
+    tls_auth_name: "dnsotls.lab.nic.cl"
+
+# lightningwirelab
+  - address_data: 81.3.27.54
+    tls_auth_name: "recursor01.dns.lightningwirelabs.com"
+
+# NextDNS Anycast
+  - address_data: 45.90.30.0
+    tls_auth_name: "anycast.dns.nextdns.io"
+
+# tiar.app
+  - address_data: 174.138.29.175
+    tls_auth_name: "dot.tiar.app"
+    
+# NextDNS Anycast
+  - address_data: 45.90.28.0
+    tls_auth_name: "anycast.dns.nextdns.io"   
+
+# LibreDNS
+  - address_data: 116.202.176.26
+    tls_auth_name: "dot.libredns.gr" 
