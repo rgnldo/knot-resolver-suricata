@@ -14,8 +14,34 @@ apply_sysctl_settings() {
     sudo sysctl vm.overcommit_memory=1
     sudo sysctl vm.overcommit_ratio=300
     sudo sysctl vm.swappiness=5
+    sudo sysctl net.ipv4.tcp_syncookies=1
     sudo sysctl vm.vfs_cache_pressure=10
+    sudo sysctl vm.dirty_background_bytes=4194304
+    sudo sysctl vm.dirty_bytes=4194304
     sudo sysctl vm.page-cluster=0
+# Proteção na rede local
+    sudo sysctl net.ipv4.conf.all.accept_redirects=0
+    sudo sysctl net.ipv4.conf.default.accept_redirects=0
+    sudo sysctl net.ipv4.conf.all.secure_redirects=0
+    sudo sysctl net.ipv4.conf.default.secure_redirects=0
+    sudo sysctl net.ipv6.conf.all.accept_redirects=0
+    sudo sysctl net.ipv6.conf.default.accept_redirects=0
+    sudo sysctl net.ipv4.conf.all.send_redirects=0
+    sudo sysctl net.ipv4.conf.default.send_redirects=0
+    sudo sysctl net.ipv4.conf.default.rp_filter=1
+    sudo sysctl net.ipv4.conf.all.rp_filter=1
+    sudo sysctl net.core.default_qdisc=cake
+    sudo sysctl net.ipv4.tcp_congestion_control=bbr
+    sudo sysctl net.core.rmem_default=1048576
+    sudo sysctl net.core.rmem_max=16777216
+    sudo sysctl net.core.wmem_default=1048576
+    sudo sysctl net.core.wmem_max=16777216
+    sudo sysctl net.core.optmem_max=65536
+    sudo sysctl net.ipv4.tcp_rmem = 4096 1048576 2097152
+    sudo sysctl net.ipv4.tcp_wmem = 4096 65536 16777216
+    sudo sysctl net.ipv4.udp_rmem_min = 8192
+    sudo sysctl net.ipv4.udp_wmem_min = 8192
+    sudo sysctl -p
 }
 
 # Função para restaurar as configurações anteriores
