@@ -96,11 +96,15 @@ ip6tables -A INPUT -p udp -m multiport --dports 1024:65535 -m conntrack --ctstat
 ip6tables -A INPUT -p icmpv6 -m hl --hl-eq 1 -j ACCEPT
 
 # Salvar regras
+mkdir /etc/iptables
 iptables-save > /etc/iptables/simple_firewall.rules
 ip6tables-save > /etc/iptables/ip6_simple_firewall.rules
 iptables-restore < /etc/iptables/simple_firewall.rules
 ip6tables-restore < /etc/iptables/ip6_simple_firewall.rules
 
 echo "Reiniciando o ufw"
+sudo ufw enable
+sudo ufw reset
+sudo ufw reload
 sudo systemctl restart ufw.service
 echo "Regras de firewall configuradas com sucesso."
