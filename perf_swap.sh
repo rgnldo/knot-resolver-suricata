@@ -37,10 +37,10 @@ apply_sysctl_settings() {
     sudo sysctl net.core.wmem_default=1048576
     sudo sysctl net.core.wmem_max=16777216
     sudo sysctl net.core.optmem_max=65536
-    sudo sysctl net.ipv4.tcp_rmem = 4096 1048576 2097152
-    sudo sysctl net.ipv4.tcp_wmem = 4096 65536 16777216
-    sudo sysctl net.ipv4.udp_rmem_min = 8192
-    sudo sysctl net.ipv4.udp_wmem_min = 8192
+    sudo sysctl net.ipv4.tcp_rmem=4096 1048576 2097152
+    sudo sysctl net.ipv4.tcp_wmem=4096 65536 16777216
+    sudo sysctl net.ipv4.udp_rmem_min=8192
+    sudo sysctl net.ipv4.udp_wmem_min=8192
     sudo sysctl -p
 }
 
