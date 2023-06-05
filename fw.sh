@@ -141,6 +141,7 @@ ip6tables-restore < /etc/iptables/ip6_simple_firewall.rules
 
 echo "Reiniciando o ufw"
 sudo systemctl enable ufw.service
-sudo systemctl start ufw.service
 sudo ufw enable
+sudo ufw reload
+
 echo "Regras de firewall configuradas com sucesso."
