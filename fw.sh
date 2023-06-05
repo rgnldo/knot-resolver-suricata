@@ -1,5 +1,38 @@
 #!/bin/bash
 
+# Verificar se o UFW está instalado
+if ! command -v ufw &>/dev/null; then
+  echo "UFW não está instalado. Instalando o UFW..."
+
+  # Verificar o sistema operacional
+  if [[ "$(uname)" == "Linux" ]]; then
+    # Verificar a distribuição Linux
+    if command -v apt-get &>/dev/null; then
+      # Ubuntu ou Debian
+      sudo apt-get update
+      sudo apt-get install ufw -y
+    elif command -v dnf &>/dev/null; then
+      # Fedora
+      sudo dnf install ufw -y
+    elif command -v yum &>/dev/null; then
+      # CentOS ou RHEL
+      sudo yum install ufw -y
+    else
+      echo "Não foi possível determinar o gerenciador de pacotes adequado para instalar o UFW."
+      exit 1
+    fi
+  else
+    echo "O sistema operacional não é suportado. O UFW não pode ser instalado."
+    exit 1
+  fi
+fi
+
+# Verificar se o UFW está ativo e pará-lo
+if sudo ufw status | grep -q "Status: active"; then
+  echo "O UFW está ativo. Parando o UFW..."
+  sudo systemctl stop ufw.service
+fi
+
 # Limpando todas as regras existentes
 iptables -F
 iptables -X
@@ -96,15 +129,18 @@ ip6tables -A INPUT -p udp -m multiport --dports 1024:65535 -m conntrack --ctstat
 ip6tables -A INPUT -p icmpv6 -m hl --hl-eq 1 -j ACCEPT
 
 # Salvar regras
-mkdir /etc/iptables
+# Verificar se o diretório /etc/iptables existe
+if [ ! -d "/etc/iptables" ]; then
+    echo "Criando o diretório /etc/iptables..."
+    mkdir -p /etc/iptables
+fi
 iptables-save > /etc/iptables/simple_firewall.rules
 ip6tables-save > /etc/iptables/ip6_simple_firewall.rules
 iptables-restore < /etc/iptables/simple_firewall.rules
 ip6tables-restore < /etc/iptables/ip6_simple_firewall.rules
 
 echo "Reiniciando o ufw"
+sudo systemctl enable ufw.service
+sudo systemctl start ufw.service
 sudo ufw enable
-sudo ufw reset
-sudo ufw reload
-sudo systemctl restart ufw.service
 echo "Regras de firewall configuradas com sucesso."
