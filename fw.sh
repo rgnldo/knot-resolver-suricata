@@ -52,11 +52,11 @@ ip6tables -P FORWARD ACCEPT
 ip6tables -P OUTPUT ACCEPT
 
 # Detectando interfaces de rede
-echo "Interfaces de rede disponíveis:"
-ip -o link show | awk -F': ' '{print $2}' | grep -v lo
-echo ""
-read -p "Digite o nome da interface de rede externa (WAN): " WAN
-read -p "Digite o nome da interface de rede interna (LAN): " LAN
+#echo "Interfaces de rede disponíveis:"
+#ip -o link show | awk -F': ' '{print $2}' | grep -v lo
+#echo ""
+#read -p "Digite o nome da interface de rede externa (WAN): " WAN
+#read -p "Digite o nome da interface de rede interna (LAN): " LAN
 
 # Detectando IPs privados
 IPV4_PRIVATE="$(echo '10.0.0.0/8 172.16.0.0/12 192.168.0.0/16' | tr ' ' '\n')"
