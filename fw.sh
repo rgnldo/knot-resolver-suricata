@@ -92,9 +92,6 @@ ufw allow 445/udp
 ufw allow 631/tcp  
 ufw allow 631/udp
 
-sudo ufw allow out proto udp ports 1024:65535
-sudo ufw allow out proto igmp
-
 echo "Ativando / Reiniciando o ufw"
 # Verificar se o UFW está ativo
 if sudo ufw status | grep -q "Status: inactive"; then
