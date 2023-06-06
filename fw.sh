@@ -10,16 +10,16 @@ if ! command -v ufw &>/dev/null; then
     if command -v apt-get &>/dev/null; then
       # Ubuntu ou Debian
       sudo apt-get update
-      sudo apt-get install ufw -y
+      sudo apt-get install ufw fail2ban curl python3 -y
     elif command -v dnf &>/dev/null; then
       # Fedora
-      sudo dnf install ufw -y
+      sudo dnf install ufw fail2ban curl python3 -y
     elif command -v yum &>/dev/null; then
       # CentOS ou RHEL
-      sudo yum install ufw -y
+      sudo yum install ufw fail2ban curl python3 -y
     elif command -v pacman &>/dev/null; then
       # Arch Linux ou compat_
-      sudo pacman -Syu ufw --noconfirm
+      sudo pacman -Syu ufw fail2ban curl python3 --noconfirm
     else
       echo "Não foi possível determinar o gerenciador de pacotes adequado para instalar o UFW."
       exit 1
@@ -35,6 +35,12 @@ if sudo ufw status | grep -q "Status: active"; then
   echo "O UFW está ativo. Parando o UFW..."
   sudo systemctl stop ufw.service
 fi
+
+# Configura o Fail2ban
+sed -i -e 's|maxretry = 5|maxretry = 3|' -e "s|^#ignoreip = .*|ignoreip = 127.0.0.1/8 ::1 $intip.0/24 $intip6::1 $ipaddr|" /etc/fail2ban/jail.conf
+systemctl enable fail2ban
+systemctl start fail2ban
+sed -ri "s/^#Port.*|^Port.*/Port $sshport/" /etc/ssh/sshd_config
 
 # Limpa as regras existentes
 sudo ufw --force reset
