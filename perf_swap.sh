@@ -19,30 +19,6 @@ apply_sysctl_settings() {
     echo "vm.dirty_background_bytes=4194304" >> /etc/sysctl.d/99-sysctl.conf
     echo "vm.dirty_bytes=4194304" >> /etc/sysctl.d/99-sysctl.conf
     echo "vm.page-cluster=0" >> /etc/sysctl.d/99-sysctl.conf
-# Proteção na rede local
-    echo "net.ipv4.conf.all.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.default.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.all.secure_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.default.secure_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv6.conf.all.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv6.conf.default.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.all.send_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.default.send_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.default.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.all.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.core.default_qdisc=cake" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.core.rmem_default=1048576" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.core.rmem_max=16777216" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.core.wmem_default=1048576" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.core.wmem_max=16777216" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.core.optmem_max=65536" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.tcp_rmem=4096 1048576 2097152" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.tcp_wmem=4096 65536 16777216" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.udp_rmem_min=8192" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.udp_wmem_min=8192" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.all.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
-    echo "net.ipv4.conf.default.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
 }
 
 # Função para restaurar as configurações anteriores
