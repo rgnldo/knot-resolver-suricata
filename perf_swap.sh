@@ -41,6 +41,8 @@ apply_sysctl_settings() {
     echo "net.ipv4.tcp_wmem=4096 65536 16777216" >> /etc/sysctl.d/99-sysctl.conf
     echo "net.ipv4.udp_rmem_min=8192" >> /etc/sysctl.d/99-sysctl.conf
     echo "net.ipv4.udp_wmem_min=8192" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.conf.all.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.conf.default.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
 }
 
 # Função para restaurar as configurações anteriores
