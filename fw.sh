@@ -91,13 +91,9 @@ sudo ufw allow out proto igmp
 
 echo "Ativando / Reiniciando o ufw"
 # Verificar se o UFW está ativo
-if sudo ufw status | grep -q "Status: disabled"; then
-  echo "O UFW está ativo. Iniciando o UFW..."
-  sudo systemctl enable ufw.service
-fi
 if sudo ufw status | grep -q "Status: inactive"; then
   echo "O UFW está ativo. Iniciando o UFW..."
-  sudo systemctl start ufw.service
+  sudo systemctl enable ufw.service
 fi
 sudo ufw --force enable
 sudo ufw reload
