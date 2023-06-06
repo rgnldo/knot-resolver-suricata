@@ -44,14 +44,32 @@ sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
 # Adiciona as regras personalizadas
-sudo ufw route limit from any to any app "LOG --log-prefix 'virusprot: '" limit 3/minute burst 10
-sudo ufw route allow from any to any app "CONNTRACK NEW recent:set DEFAULT mask 255.255.255.255 rsource"
-sudo ufw route deny from any to any app "CONNTRACK NEW recent:update seconds 60 hitcount 10 name DEFAULT mask 255.255.255.255 rsource"
-sudo ufw route deny from any to any app "DROP"
+# Definir o número máximo de tentativas de conexão SSH permitidas antes de bloquear
+MAX_ATTEMPTS=4
 
-sudo ufw route allow from any to any port 22 app "CONNTRACK NEW recent:set SSH rsource"
-sudo ufw route deny from any to any port 22 app "CONNTRACK NEW recent:update seconds 300 hitcount 4 name SSH rsource"
-sudo ufw route allow from any to any port 22 app "ACCEPT"
+# Definir o tempo de bloqueio em segundos (aqui, 5 minutos)
+BLOCK_TIME=300
+
+# Adicionar regra para permitir conexões SSH
+sudo ufw allow ssh
+
+# Adicionar regra para registrar tentativas de conexão SSH
+sudo ufw insert 1 deny proto tcp from any to any port 22 comment 'SSH lockout' \
+  state NEW recent match --set --name SSH --rsource
+
+# Adicionar regra para bloquear conexões após exceder o número máximo de tentativas
+sudo ufw insert 2 deny proto tcp from any to any port 22 comment 'SSH lockout' \
+  state NEW recent match --update --seconds $BLOCK_TIME --hitcount $MAX_ATTEMPTS \
+  --name SSH --rsource
+  
+# Criar uma nova chain (cadeia) para VIRUSPROT
+sudo ufw route allow in proto tcp from any to any port 0
+
+# Regra para limitar a taxa de conexões TCP para a chain VIRUSPROT
+sudo ufw limit log/tcp comment 'VIRUSPROT' from any to any
+
+# Bloquear a chain VIRUSPROT
+sudo ufw deny VIRUSPROT
 
 sudo ufw route deny proto tcp to any port 0
 sudo ufw route deny proto udp to any port 0
