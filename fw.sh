@@ -109,7 +109,7 @@ sudo ufw route allow from out to any proto udp ports 1024:65535
 sudo ufw allow out proto igmp
 
 echo "Reiniciando o ufw"
-sudo systemctl enable ufw.service
+#sudo systemctl enable ufw.service
 sudo ufw --force enable
 sudo ufw reload
 
