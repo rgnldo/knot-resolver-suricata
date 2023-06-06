@@ -39,6 +39,9 @@ fi
 # Limpa as regras existentes
 sudo ufw --force reset
 
+# Editando políticas de acesso
+sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+
 # Define a política padrão para DENY
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
@@ -82,9 +85,15 @@ sudo ufw route allow established
 sudo ufw route allow in on lo
 sudo ufw route deny invalid
 
-sudo ufw route allow from any to any proto ipv6-icmp
+sudo ufw route allow from any to any proto icmpv6
 sudo ufw route deny invalid
 sudo ufw route allow proto vrrp
+
+ufw allow 53/tcp # DNS
+ufw allow 53/udp # DNS
+ufw allow 67/udp # DHCP
+ufw allow 67/tcp # DHCP
+ufw allow 546:547/udp # DHCPv6
 
 sudo ufw route allow from any to any port 631 proto udp
 sudo ufw route allow from any to any port 631 proto tcp
@@ -101,12 +110,12 @@ sudo ufw route allow from any to any port 445 proto udp
 sudo ufw route allow from any to any port 22 proto tcp
 sudo ufw route allow from any to any port 22 proto tcpv6
 
-sudo ufw route allow from any to any proto udp ports 1024:65535
-sudo ufw route allow proto igmp
+sudo ufw route allow from out to any proto udp ports 1024:65535
+sudo ufw allow out proto igmp
 
 echo "Reiniciando o ufw"
 sudo systemctl enable ufw.service
-sudo ufw enable
+sudo ufw --force enable
 sudo ufw reload
 
 echo "Regras de firewall configuradas com sucesso."
