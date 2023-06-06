@@ -71,11 +71,6 @@ sudo ufw route allow in proto tcp from any to any port 0
 # Regra para limitar a taxa de conexões TCP para a chain VIRUSPROT
 sudo ufw limit log/tcp from any to any
 
-# Bloquear a chain VIRUSPROT
-
-sudo ufw route deny proto tcp to any port 0
-sudo ufw route deny proto udp to any port 0
-
 sudo ufw default deny incoming
 sudo ufw default deny forward
 sudo ufw default allow outgoing
