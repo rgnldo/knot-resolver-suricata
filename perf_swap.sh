@@ -7,6 +7,9 @@ detect_current_sysctl_settings() {
     current_swappiness=$(sysctl -n vm.swappiness)
     current_vfs_cache_pressure=$(sysctl -n vm.vfs_cache_pressure)
     current_page_cluster=$(sysctl -n vm.page-cluster)
+    current_tcp_syncookies=$(sysctl -n net.ipv4.tcp_syncookies)
+    current_dirty_background_bytes=$(sysctl -n vm.dirty_background_bytes)
+    current_dirty_bytes=$(sysctl -n vm.dirty_bytes)
 }
 
 # Função para aplicar as configurações desejadas
@@ -28,6 +31,9 @@ restore_sysctl_settings() {
     sudo sysctl vm.swappiness=$current_swappiness
     sudo sysctl vm.vfs_cache_pressure=$current_vfs_cache_pressure
     sudo sysctl vm.page-cluster=$current_page_cluster
+    sudo sysctl net.ipv4.tcp_syncookies=$current_tcp_syncookies
+    sudo sysctl vm.dirty_background_bytes=$current_dirty_background_bytes
+    sudo sysctl vm.dirty_bytes=$current_dirty_bytes
 }
 
 # Detectar os valores atuais das configurações do sysctl
@@ -65,3 +71,4 @@ show_menu() {
 while true; do
     show_menu
 done
+
