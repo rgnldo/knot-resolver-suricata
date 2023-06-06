@@ -86,12 +86,6 @@ ufw allow 445/udp
 ufw allow 631/tcp  
 ufw allow 631/udp
 
--A ufw-before-input -p icmp --icmp-type destination-unreachable -j ACCEPT
--A ufw-before-input -p icmp --icmp-type source-quench -j ACCEPT
--A ufw-before-input -p icmp --icmp-type time-exceeded -j ACCEPT
--A ufw-before-input -p icmp --icmp-type parameter-problem -j ACCEPT
--A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT
-
 sudo ufw allow out proto udp ports 1024:65535
 sudo ufw allow out proto igmp
 
