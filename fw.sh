@@ -77,6 +77,14 @@ ufw allow 53/udp # DNS
 ufw allow 67/udp # DHCP
 ufw allow 67/tcp # DHCP
 ufw allow 546:547/udp # DHCPv6
+ufw allow 137/tcp  
+ufw allow 137/udp
+ufw allow 138/tcp  
+ufw allow 138/udp
+ufw allow 445/tcp  
+ufw allow 445/udp
+ufw allow 631/tcp  
+ufw allow 631/udp
 
 -A ufw-before-input -p icmp --icmp-type destination-unreachable -j ACCEPT
 -A ufw-before-input -p icmp --icmp-type source-quench -j ACCEPT
@@ -84,19 +92,7 @@ ufw allow 546:547/udp # DHCPv6
 -A ufw-before-input -p icmp --icmp-type parameter-problem -j ACCEPT
 -A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT
 
-sudo ufw route allow from any to any port 631 proto udp
-sudo ufw route allow from any to any port 631 proto tcp
-
-sudo ufw route allow from any to any port 137 proto tcp
-sudo ufw route allow from any to any port 137 proto udp
-sudo ufw route allow from any to any port 138 proto tcp
-sudo ufw route allow from any to any port 138 proto udp
-sudo ufw route allow from any to any port 139 proto tcp
-sudo ufw route allow from any to any port 139 proto udp
-sudo ufw route allow from any to any port 445 proto tcp
-sudo ufw route allow from any to any port 445 proto udp
-
-sudo ufw route allow from out to any proto udp ports 1024:65535
+sudo ufw allow out proto udp ports 1024:65535
 sudo ufw allow out proto igmp
 
 echo "Ativando / Reiniciando o ufw"
