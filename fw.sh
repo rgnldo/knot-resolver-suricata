@@ -64,9 +64,6 @@ sudo ufw insert 1 deny proto tcp from any to any port 22 comment 'SSH lockout' \
 sudo ufw insert 2 deny proto tcp from any to any port 22 comment 'SSH lockout' \
   state NEW recent match --update --seconds $BLOCK_TIME --hitcount $MAX_ATTEMPTS \
   --name SSH --rsource
-  
-# Criar uma nova chain (cadeia) para VIRUSPROT
-sudo ufw route allow in proto tcp from any to any port 0
 
 # Regra para limitar a taxa de conexões TCP para a chain VIRUSPROT
 sudo ufw limit log/tcp from any to any
@@ -80,7 +77,6 @@ ufw allow 53/udp # DNS
 ufw allow 67/udp # DHCP
 ufw allow 67/tcp # DHCP
 ufw allow 546:547/udp # DHCPv6
-ufw allow 22/tcp
 
 -A ufw-before-input -p icmp --icmp-type destination-unreachable -j ACCEPT
 -A ufw-before-input -p icmp --icmp-type source-quench -j ACCEPT
@@ -103,8 +99,16 @@ sudo ufw route allow from any to any port 445 proto udp
 sudo ufw route allow from out to any proto udp ports 1024:65535
 sudo ufw allow out proto igmp
 
-echo "Reiniciando o ufw"
-#sudo systemctl enable ufw.service
+echo "Ativando / Reiniciando o ufw"
+# Verificar se o UFW está ativo
+if sudo ufw status | grep -q "Status: disabled"; then
+  echo "O UFW está ativo. Iniciando o UFW..."
+  sudo systemctl enable ufw.service
+fi
+if sudo ufw status | grep -q "Status: inactive"; then
+  echo "O UFW está ativo. Iniciando o UFW..."
+  sudo systemctl start ufw.service
+fi
 sudo ufw --force enable
 sudo ufw reload
 
