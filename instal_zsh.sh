@@ -48,7 +48,8 @@ if [ ! -f "$zip_file_path" ]; then
 fi
 
 # Descompactar o arquivo zip na pasta de destino
-unzip -q "$zip_file_path" -d "$destination_folder"
+cd "$destination_folder"
+unzip -q "$zip_file_name"
 
 # Verificar se a descompactação foi bem-sucedida
 if [ $? -eq 0 ]; then
