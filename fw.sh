@@ -43,14 +43,12 @@ systemctl enable fail2ban
 systemctl start fail2ban
 sed -ri "s/^#Port.*|^Port.*/Port $sshport/" /etc/ssh/sshd_config
 
-Configura o Fail2ban
+echo "Adicionando opções de segurança no kernel"
 # Proteção na rede local
 echo "net.ipv4.conf.all.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
 echo "net.ipv4.conf.default.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
 echo "net.ipv4.conf.all.secure_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
 echo "net.ipv4.conf.default.secure_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-
-echo "Adicionando opções de segurança no kernel"
 
 # Ignore ICMP redirects
 echo "net.ipv6.conf.all.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
