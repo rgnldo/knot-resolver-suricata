@@ -41,6 +41,12 @@ else
     exit 1
 fi
 
+# Verificar se o arquivo zip existe
+if [ ! -f "$zip_file_path" ]; then
+    echo "O arquivo zip não foi encontrado em $zip_file_path."
+    exit 1
+fi
+
 # Descompactar o arquivo zip na pasta de destino
 unzip -q "$zip_file_path" -d "$destination_folder"
 
