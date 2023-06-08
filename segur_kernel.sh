@@ -1,23 +1,11 @@
 #!/bin/bash
 
 echo "Adicionando opções de segurança no kernel"
-# Ignore ICMP redirects
-echo "net.ipv6.conf.all.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv6.conf.default.accept_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.conf.all.send_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.conf.default.send_redirects=0" >> /etc/sysctl.d/99-sysctl.conf
 
 # Ignore ICMP broadcast requests
 echo "net.ipv4.icmp_echo_ignore_broadcasts=1" >> /etc/sysctl.d/99-sysctl.conf
 
-# Disable source packet routing
-echo "net.ipv4.conf.all.accept_source_route=0" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv6.conf.all.accept_source_route=0" >> /etc/sysctl.d/99-sysctl.conf 
-echo "net.ipv4.conf.default.accept_source_route=0" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv6.conf.default.accept_source_route=0" >> /etc/sysctl.d/99-sysctl.conf
-
-
-echo "net.core.default_qdisc=cake" >> /etc/sysctl.d/99-sysctl.conf
+echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/99-sysctl.conf
 echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.d/99-sysctl.conf
 
 echo "net.core.rmem_default=1048576" >> /etc/sysctl.d/99-sysctl.conf
@@ -46,10 +34,6 @@ echo "net.ipv4.conf.default.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
 
 # Ignore ICMP broadcast requests
 echo "net.ipv4.icmp_echo_ignore_broadcasts=1" >> /etc/sysctl.d/99-sysctl.conf
-
-# IP Spoofing protection
-echo "net.ipv4.conf.all.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
-echo "net.ipv4.conf.default.rp_filter=1" >> /etc/sysctl.d/99-sysctl.conf
 
 # Hide kernel pointers
 echo "kernel.kptr_restrict=2" >> /etc/sysctl.d/99-sysctl.conf 
