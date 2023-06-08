@@ -63,12 +63,9 @@ fi
 sudo usermod -aG sambashare "$(whoami)"
 
 echo "Habilitando e iniciando o Samba."
-sudo systemctl enable smb.service
-sudo systemctl enable nmb.service
-sudo systemctl enable samba.service
-
-sudo systemctl start smb.service
-sudo systemctl start nmb.service
-sudo systemctl start samba.service
+mkdir /home/srv-smb
+sudo chmod ugo+rwx /home/srv-smb
+sudo systemctl enable smb nmb
+sudo systemctl start smb nmb
 
 echo "A instalação e configuração do Samba foram concluídas com sucesso."
