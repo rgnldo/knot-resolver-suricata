@@ -65,6 +65,7 @@ sudo usermod -aG sambashare "$(whoami)"
 echo "Habilitando e iniciando o Samba."
 mkdir /home/srv-smb
 sudo chmod ugo+rwx /home/srv-smb
+sudo smbpasswd -a rgnldo
 sudo systemctl enable smb nmb
 sudo systemctl start smb nmb
 
