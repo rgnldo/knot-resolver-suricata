@@ -76,8 +76,8 @@ sed -i '/^$/d' "$sysctl_conf_file"
 echo "As configurações foram adicionadas ao arquivo $sysctl_conf_file."
 
 # Reiniciar o serviço de rede para aplicar as alterações
-service networking restart
-echo "O serviço de rede foi reiniciado."
+# service networking restart
+# echo "O serviço de rede foi reiniciado."
 
 # Reiniciar o sistema para garantir que as alterações sejam aplicadas completamente
 read -p "Deseja reiniciar o sistema agora para aplicar completamente as alterações? (s/n): " choice
