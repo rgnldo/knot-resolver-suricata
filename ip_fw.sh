@@ -10,6 +10,9 @@ iptables -X
 iptables -t nat -X
 iptables -t mangle -X
 
+rm /etc/iptables/simple_firewall.rules
+rm /etc/iptables/ip6_simple_firewall.rules
+
 # Definir a política padrão como ACCEPT para todas as chains
 iptables -P INPUT ACCEPT
 iptables -P OUTPUT ACCEPT
