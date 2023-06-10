@@ -1,8 +1,24 @@
 #!/bin/bash
 
-# Limpar todas as regras existentes
+# Limpar todas as regras e chains nas tabelas filter, nat e mangle
 iptables -F
+iptables -t nat -F
+iptables -t mangle -F
+
+# Excluir todas as chains personalizadas
 iptables -X
+iptables -t nat -X
+iptables -t mangle -X
+
+# Definir a política padrão como ACCEPT para todas as chains
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -t nat -P PREROUTING ACCEPT
+iptables -t nat -P OUTPUT ACCEPT
+iptables -t nat -P POSTROUTING ACCEPT
+iptables -t mangle -P PREROUTING ACCEPT
+iptables -t mangle -P OUTPUT ACCEPT
 
 # Bloqueando vírus
 iptables -N VIRUSPROT
