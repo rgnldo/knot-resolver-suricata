@@ -117,7 +117,8 @@ iptables -A INPUT -p tcp --tcp-flags ACK,URG URG -m limit --limit 1/s --limit-bu
 # Salvar regras
 iptables-save > /etc/iptables/simple_firewall.rules
 ip6tables-save > /etc/iptables/ip6_simple_firewall.rules
-
-echo "Iniciando serviços IPTABLES"
-sudo systemctl enable iptables.service
-sudo systemctl start iptables.service
+iptables-restore < /etc/iptables/simple_firewall.rules
+ip6tables-restore < /etc/iptables/ip6_simple_firewall.rules
+#echo "Iniciando serviços IPTABLES"
+#sudo systemctl enable iptables.service
+#sudo systemctl start iptables.service
