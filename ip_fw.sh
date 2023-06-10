@@ -119,6 +119,6 @@ iptables-save > /etc/iptables/iptables.rules
 ip6tables-save > /etc/iptables/iptables.rules
 iptables-restore < /etc/iptables/iptables.rules
 ip6tables-restore < /etc/iptables/iptables.rules
-echo "Iniciando serviços IPTABLES"
-sudo systemctl enable iptables.service
-sudo systemctl start iptables.service
+#echo "Iniciando serviços IPTABLES"
+#sudo systemctl enable iptables.service
+#sudo systemctl start iptables.service
