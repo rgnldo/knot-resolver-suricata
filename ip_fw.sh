@@ -117,8 +117,50 @@ iptables -A INPUT -p tcp --tcp-flags ACK,URG URG -m limit --limit 1/s --limit-bu
 # Salvar regras
 iptables-save > /etc/iptables/simple_firewall.rules
 ip6tables-save > /etc/iptables/ip6_simple_firewall.rules
+
+echo "Gerando a execuç."
+fw_script_file="/usr/local/bin/fw.sh"
+
+# Verificar se o arquivo já existe
+if [[ -e "$fw_script_file" ]]; then
+    echo "O arquivo $fw_script_file já existe. Removendo..."
+    sudo rm "$fw_script_file"
+fi
+
+# Criar o arquivo executável
+echo "#!/bin/bash
+
 iptables-restore < /etc/iptables/simple_firewall.rules
-ip6tables-restore < /etc/iptables/ip6_simple_firewall.rules
-#echo "Iniciando serviços IPTABLES"
-#sudo systemctl enable iptables.service
-#sudo systemctl start iptables.service
+ip6tables-restore < /etc/iptables/ip6_simple_firewall.rules" | sudo tee "$fw_script_file"
+
+sudo chmod +x "$fw_script_file"
+
+echo "Arquivo $fw_script_file criado com sucesso."
+
+# Script para criar o arquivo de serviço /etc/systemd/system/fw.service
+fw_service_file="/etc/systemd/system/fw.service"
+
+# Verificar se o arquivo de serviço já existe
+if [[ -e "$fw_service_file" ]]; then
+    echo "O arquivo $fw_service_file já existe. Removendo..."
+    sudo rm "$fw_service_file"
+fi
+
+# Criar o arquivo de serviço
+echo "[Unit]
+Description=Firewall
+
+[Service]
+ExecStart=/usr/local/bin/fw.sh
+
+[Install]
+WantedBy=multi-user.target" | sudo tee "$fw_service_file"
+
+echo "Arquivo $fw_service_file criado com sucesso."
+
+# Habilitar e iniciar o serviço
+sudo systemctl enable fw.service
+sudo systemctl start fw.service
+
+echo "Serviço fw.service habilitado e iniciado com sucesso."
+
