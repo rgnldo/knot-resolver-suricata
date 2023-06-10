@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Limpar todas as regras existentes
+iptables -F
+iptables -X
+
 # Bloqueando vírus
 iptables -N VIRUSPROT
 iptables -A VIRUSPROT -m limit --limit 3/minute --limit-burst 10 -j LOG --log-prefix "virusprot: "
@@ -25,10 +29,30 @@ iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state INVALID -j DROP
 
+# don't log noisy services by default
+iptables -A INPUT -p udp --dport 137 -j DROP
+iptables -A INPUT -p udp --dport 138 -j DROP
+iptables -A INPUT -p tcp --dport 139 -j DROP
+iptables -A INPUT -p tcp --dport 445 -j DROP
+iptables -A INPUT -p udp --dport 67 -j DROP
+iptables -A INPUT -p udp --dport 68 -j DROP
+
 # Permitindo ICMPv6 e CARP
 ip6tables -A INPUT -p icmpv6 -j ACCEPT
 ip6tables -A INPUT -m state --state INVALID -j DROP
 ip6tables -A INPUT -p vrrp -j ACCEPT
+
+# Permitir o serviço NetBIOS (UDP)
+iptables -A INPUT -p udp --dport 137 -j ACCEPT
+iptables -A INPUT -p udp --dport 138 -j ACCEPT
+
+# Permitir o compartilhamento de arquivos e impressoras do Windows (TCP)
+iptables -A INPUT -p tcp --dport 139 -j ACCEPT
+iptables -A INPUT -p tcp --dport 445 -j ACCEPT
+
+# Permitir o serviço DHCP (UDP)
+iptables -A INPUT -p udp --dport 67 -j ACCEPT
+iptables -A INPUT -p udp --dport 68 -j ACCEPT
 
 # Permitir pacotes relacionados ou estabelecidos
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
