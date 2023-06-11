@@ -21,17 +21,9 @@ sudo sbctl verify
 echo "Assinando o kernel:"
 
 echo "Obter o nome do kernel atual"
-kernel_version=$(uname -r)
-regex="([^-]+)-([^-]+)-(.+)"
-if [[ $kernel_version =~ $regex ]]; then
-    kernel_name="${BASH_REMATCH[1]}-${BASH_REMATCH[2]}"
-
-    # Assinar o arquivo do kernel
-    sudo sbctl sign -s "/boot/vmlinuz-$kernel_name"
-else
-    echo "Erro ao obter o nome do kernel atual"
-    exit 1
-fi
+kernel=$(ls /boot/vmlinuz-* | sed 's/.*vmlinuz-//')
+echo "Assinando o kernel $kernel:"
+sudo sbctl sign -s "/boot/vmlinuz-$kernel"
 
 echo "Assinando o arquivo BOOTX64.EFI:"
 sudo sbctl sign -s "$(readlink -f /boot/EFI/BOOT/BOOTX64.EFI)"
