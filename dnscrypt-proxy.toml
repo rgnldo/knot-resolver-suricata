@@ -102,7 +102,7 @@ force_tcp = false
 ## Note that, like DNSCrypt but unlike other HTTP versions, this uses
 ## UDP and (usually) port 443 instead of TCP.
 
-http3 = true
+http3 = false
 
 
 ## SOCKS proxy
@@ -378,7 +378,7 @@ reject_ttl = 10
 
 ## Enable a DNS cache to reduce latency and outgoing traffic
 
-cache = true
+cache = false
 
 
 ## Cache size
