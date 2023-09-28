@@ -1,0 +1,11 @@
+https://s3.i02.estaleiro.serpro.gov.br/blocklist/blocklist.txt
+https://talosintelligence.com/documents/ip-blacklist
+https://iplists.firehol.org/files/bbcan177_ms1.netset
+https://iplists.firehol.org/files/bbcan177_ms3.netset
+https://iplists.firehol.org/files/geolite2_country/anonymous.netset
+https://sslbl.abuse.ch/blacklist/sslipblacklist.txt
+https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt
+https://iplists.firehol.org/files/ransomware_cryptowall_ps.ipset
+https://iplists.firehol.org/files/ransomware_feed.ipset
+https://iplists.firehol.org/files/normshield_all_ddosbot.ipset
+https://ipv64.net/blocklists/v64.txt
