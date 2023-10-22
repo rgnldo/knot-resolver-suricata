@@ -24,8 +24,9 @@ if [ $? -eq 0 ]; then
     echo "Arquivo baixado com sucesso."
 
     # Ativa e inicia o serviço unattended-upgrades
-    sudo systemctl enable unattended-upgrades
-    sudo systemctl start unattended-upgrades
+    sudo systemctl daemon-reload
+    sudo systemctl enable unattended-upgrades.service
+    sudo systemctl start unattended-upgrades.service
 
     echo "Serviço unattended-upgrades ativado e iniciado."
 else
