@@ -41,7 +41,7 @@ Unattended-Upgrade::Package-Blacklist {
 
 // This option controls whether the development release of Ubuntu will be
 // upgraded automatically. Valid values are "true", "false", and "auto".
-Unattended-Upgrade::DevRelease "auto";
+Unattended-Upgrade::DevRelease "false";
 
 // This option allows you to control if on a unclean dpkg exit
 // unattended-upgrades will automatically run 
@@ -95,12 +95,12 @@ Unattended-Upgrade::Automatic-Reboot "true";
 
 // Automatically reboot even if there are users currently logged in
 // when Unattended-Upgrade::Automatic-Reboot is set to true
-Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+// Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
 
 // If automatic reboot is enabled and needed, reboot at the specific
 // time instead of immediately
 //  Default: "now"
-Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+Unattended-Upgrade::Automatic-Reboot-Time "02:00";
 
 // Use apt bandwidth limit feature, this example limits the download
 // speed to 70kb/sec
