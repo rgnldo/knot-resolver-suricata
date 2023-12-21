@@ -25,7 +25,8 @@ echo "[Unit]" > $TIMER_FILE
 echo "Description=Agendador diário para o script de atualização" >> $TIMER_FILE
 echo "" >> $TIMER_FILE
 echo "[Timer]" >> $TIMER_FILE
-echo "OnCalendar=*-*-* 02:00:00" >> $TIMER_FILE
+echo "OnCalendar=daily" >> $TIMER_FILE
+echo "OnCalendar=02:00" >> $TIMER_FILE
 echo "Persistent=true" >> $TIMER_FILE
 echo "" >> $TIMER_FILE
 echo "[Install]" >> $TIMER_FILE
