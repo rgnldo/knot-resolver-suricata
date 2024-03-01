@@ -19,7 +19,7 @@ echo -e $TEXT_YELLOW
 echo 'APT upgrade finalizado...'
 echo -e $TEXT_RESET
 
-apt-get dist-upgrade -y
+apt full-upgrade -y
 echo -e $TEXT_YELLOW
 echo 'APT distributive upgrade finalizado...'
 echo -e $TEXT_RESET
