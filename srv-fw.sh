@@ -52,13 +52,19 @@ ip6tables -A INPUT -p icmpv6 -j ACCEPT
 ip6tables -A INPUT -m state --state INVALID -j DROP
 ip6tables -A INPUT -p vrrp -j ACCEPT
 
-echo "Permitir o serviço NetBIOS (UDP)"
-iptables -A INPUT -p udp --dport 137 -j ACCEPT
-iptables -A INPUT -p udp --dport 138 -j ACCEPT
+echo "Permitir HTTPS e HTTP (TCP)"
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 
-echo "Permitir o compartilhamento de arquivos e impressoras do Windows (TCP)"
-iptables -A INPUT -p tcp --dport 139 -j ACCEPT
-iptables -A INPUT -p tcp --dport 445 -j ACCEPT
+echo "DNS (TCP UDP)"
+iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+
+echo "Permitir Wireguard (UDP)"
+iptables -A INPUT -p --dport 60759 -j ACCEPT
+
+#echo "Permitir o compartilhamento de arquivos e impressoras do Windows (TCP)"
+#iptables -A INPUT -p tcp --dport 139 -j ACCEPT
+#iptables -A INPUT -p tcp --dport 445 -j ACCEPT
 
 echo "Permitir o serviço DHCP (UDP)"
 iptables -A INPUT -p udp --dport 67 -j ACCEPT
@@ -67,11 +73,11 @@ iptables -A INPUT -p udp --dport 68 -j ACCEPT
 echo "Permitir pacotes relacionados ou estabelecidos"
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
-echo "Permitir pacotes destinados ao endereço multicast mDNS"
-iptables -A INPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT
+#echo "Permitir pacotes destinados ao endereço multicast mDNS"
+#iptables -A INPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT
 
-echo "Permitir pacotes destinados ao endereço multicast UPnP"
-iptables -A INPUT -p udp -d 239.255.255.250 --dport 1900 -j ACCEPT
+#echo "Permitir pacotes destinados ao endereço multicast UPnP"
+#iptables -A INPUT -p udp -d 239.255.255.250 --dport 1900 -j ACCEPT
 
 echo "Permitir pacotes destinados ao endereço local"
 iptables -A INPUT -i lo -j ACCEPT
