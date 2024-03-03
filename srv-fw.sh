@@ -15,7 +15,7 @@ rm /etc/iptables/simple_firewall.rules
 rm /etc/iptables/ip6_simple_firewall.rules
 
 echo "Definir a política padrão como ACCEPT para todas as chains"
-iptables -P INPUT ACCEPT
+iptables -P INPUT DROP
 iptables -P OUTPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -t nat -P PREROUTING ACCEPT
