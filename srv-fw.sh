@@ -17,12 +17,7 @@ rm /etc/iptables/ip6_simple_firewall.rules
 echo "Definir a política padrão como ACCEPT para todas as chains"
 iptables -P INPUT DROP
 iptables -P OUTPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -t nat -P PREROUTING ACCEPT
-iptables -t nat -P OUTPUT ACCEPT
-iptables -t nat -P POSTROUTING ACCEPT
-iptables -t mangle -P PREROUTING ACCEPT
-iptables -t mangle -P OUTPUT ACCEPT
+iptables -P FORWARD DROP
 
 echo "Bloqueando vírus"
 iptables -N VIRUSPROT
@@ -52,8 +47,12 @@ ip6tables -A INPUT -p icmpv6 -j ACCEPT
 ip6tables -A INPUT -m state --state INVALID -j DROP
 ip6tables -A INPUT -p vrrp -j ACCEPT
 
+echo "Permitir pacotes destinados ao endereço local"
+iptables -A INPUT -i lo -j ACCEPT
+
 echo "Permitir HTTPS e HTTP (TCP)"
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 
 echo "DNS (TCP UDP)"
 iptables -A INPUT -p tcp --dport 53 -j ACCEPT
@@ -66,9 +65,9 @@ iptables -A INPUT -p --dport 60759 -j ACCEPT
 #iptables -A INPUT -p tcp --dport 139 -j ACCEPT
 #iptables -A INPUT -p tcp --dport 445 -j ACCEPT
 
-echo "Permitir o serviço DHCP (UDP)"
-iptables -A INPUT -p udp --dport 67 -j ACCEPT
-iptables -A INPUT -p udp --dport 68 -j ACCEPT
+#echo "Permitir o serviço DHCP (UDP)"
+#iptables -A INPUT -p udp --dport 67 -j ACCEPT
+#iptables -A INPUT -p udp --dport 68 -j ACCEPT
 
 echo "Permitir pacotes relacionados ou estabelecidos"
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
@@ -79,32 +78,32 @@ iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 #echo "Permitir pacotes destinados ao endereço multicast UPnP"
 #iptables -A INPUT -p udp -d 239.255.255.250 --dport 1900 -j ACCEPT
 
-echo "Permitir pacotes destinados ao endereço local"
-iptables -A INPUT -i lo -j ACCEPT
-
+# Proteção contra SYN flood
 echo "Proteção contra SYN flood"
 iptables -A INPUT -p tcp --syn -m connlimit --connlimit-above 10 --connlimit-mask 32 -j DROP
 
+# Proteção contra ataques de inundação de ICMP
 echo "Proteção contra ataques de inundação de ICMP"
 iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 1/s --limit-burst 10 -j ACCEPT
 
-echo "Proteção contra ataques de negação de serviço"
+# Proteção contra ataques de negação de serviço (DoS) na porta 80
+echo "Proteção contra ataques de negação de serviço na porta 80"
 iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/s --limit-burst 100 -j ACCEPT
 
-echo "Limitar a taxa de abertura de conexões por segundo"
+# Limitar a taxa de abertura de novas conexões
+echo "Limitar a taxa de abertura de novas conexões por segundo"
 iptables -A INPUT -p tcp --syn -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT
 
-echo "Restringir a execução de páginas de memória"
+# Restringir tráfego local
+echo "Restringir tráfego local"
 iptables -A INPUT -m addrtype --dst-type LOCAL -m limit --limit 1/s --limit-burst 10 -j ACCEPT
 
+# Proteção contra estouro de buffer
 echo "Proteção contra estouro de buffer"
 iptables -A INPUT -p tcp --tcp-flags ALL NONE -m limit --limit 1/h -j ACCEPT
 iptables -A INPUT -p tcp --tcp-flags ALL ALL -m limit --limit 1/h -j ACCEPT
 
-echo "Ocultar kernel pointers"
-iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
-iptables -A INPUT -p tcp --tcp-flags ALL FIN,URG,PSH -j DROP
-
+# Permitir respostas ACK/RTS para acelerar a comunicação
 echo "Permitir respostas ACK/RTS para acelerar a comunicação"
 iptables -A INPUT -p tcp --tcp-flags ACK,FIN FIN -m limit --limit 1/s --limit-burst 10 -j ACCEPT
 iptables -A INPUT -p tcp --tcp-flags ACK,PSH PSH -m limit --limit 1/s --limit-burst 10 -j ACCEPT
