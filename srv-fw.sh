@@ -79,7 +79,7 @@ iptables -A INPUT -p tcp --dport 53 -j ACCEPT
 iptables -A INPUT -p udp --dport 53 -j ACCEPT
 
 echo "Permitir Wireguard (UDP)"
-iptables -A INPUT -p --dport 60759 -j ACCEPT
+iptables -A INPUT -p udp --dport 60759 -j ACCEPT
 
 #echo "Permitir o compartilhamento de arquivos e impressoras do Windows (TCP)"
 #iptables -A INPUT -p tcp --dport 139 -j ACCEPT
