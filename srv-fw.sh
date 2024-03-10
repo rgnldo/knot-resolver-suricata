@@ -14,29 +14,49 @@ echo "Removendo arquivos existentes"
 rm /etc/iptables/simple_firewall.rules
 rm /etc/iptables/ip6_simple_firewall.rules
 
+# Regras de Firewall com Identificação Automática da NIC
+
+# Obter nome da interface
+nic=$(ip route get 1.1.1.1 | awk '{print $5}')
+
+# Verificar se a interface foi obtida
+if [ -z "$nic" ]; then
+  echo "Erro: Interface de rede não identificada!"
+  exit 1
+fi
+
 echo "Definir a política padrão como ACCEPT para todas as chains"
 iptables -P INPUT DROP
 iptables -P OUTPUT ACCEPT
 iptables -P FORWARD DROP
 
-echo "Bloqueando vírus"
+# Criar cadeia VIRUSPROT
 iptables -N VIRUSPROT
-iptables -A VIRUSPROT -m limit --limit 3/minute --limit-burst 10 -j LOG --log-prefix "virusprot: "
-iptables -A VIRUSPROT -m conntrack --ctstate NEW -m recent --set --name DEFAULT --mask 255.255.255.255 --rsource 
-iptables -A VIRUSPROT -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 --name DEFAULT --mask 255.255.255.255 --rsource -j DROP
+
+# Regras pendentes de ajuste
+# 1. Limite de conexões por minuto (Ajuste o limite e burst)
+iptables -A VIRUSPROT -m limit --limit 3/minute --limit-burst 10 -j LOG --log-prefix "virusprot: Limite excedido - "
+
+# 2. Verificar conexões novas e registrar tentativas (Ajuste máscara e log)
+iptables -A VIRUSPROT -m conntrack --ctstate NEW -m recent --set --name VIRUSSCAN --mask 255.255.255.255 --rsource -j LOG --log-prefix "virusprot: Nova conexão de - "
+
+# 3. Atualizar contagem e bloquear por suspeita de vírus (Ajuste tempo, contagem e máscara)
+iptables -A VIRUSPROT -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 --name VIRUSSCAN --mask 255.255.255.255 --rsource -j DROP
+
+# Regra final: Descartar qualquer pacote na cadeia VIRUSPROT
 iptables -A VIRUSPROT -j DROP
 
-echo "SSH lockout"
+echo "Bloqueio por tentativas de login SSH"
 iptables -N SSHLOCKOUT
 iptables -A SSHLOCKOUT -m recent --name sshbf --set -j DROP
-iptables -A INPUT -p tcp --dport ssh -m recent --name sshbf --rcheck --seconds 300 --hitcount 4 -j SSHLOCKOUT
+iptables -A INPUT -i $nic -p tcp --dport ssh -m recent --name sshbf --rcheck --seconds 60 --hitcount 4 -j SSHLOCKOUT
+iptables -A INPUT -i $nic -p tcp --dport ssh -m recent --name sshbf --rcheck --seconds 60 --hitcount 4 -j LOG --log-prefix "Tentativa SSH bloqueada: " --log-level 4
 
 echo "Bloqueando todos os portos de destino 0"
 iptables -A INPUT -p tcp --destination-port 0 -j DROP
 iptables -A INPUT -p udp --destination-port 0 -j DROP
 
 echo "Regra padrão DROP e violações de estado"
-iptables -P OUTPUT ACCEPT
 iptables -A INPUT -p icmp -j ACCEPT
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
@@ -68,9 +88,6 @@ iptables -A INPUT -p --dport 60759 -j ACCEPT
 #echo "Permitir o serviço DHCP (UDP)"
 #iptables -A INPUT -p udp --dport 67 -j ACCEPT
 #iptables -A INPUT -p udp --dport 68 -j ACCEPT
-
-echo "Permitir pacotes relacionados ou estabelecidos"
-iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
 #echo "Permitir pacotes destinados ao endereço multicast mDNS"
 #iptables -A INPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT
