@@ -1,41 +1,80 @@
 #!/bin/bash
 
+install_service() {
+    # Baixar o script atlz.sh
+    sudo curl -o $SCRIPT_PATH $SCRIPT_URL
+    sudo chmod +x $SCRIPT_PATH
+
+    # Criar o arquivo de serviço
+    echo "[Unit]" > $SERVICE_FILE
+    echo "Description=Script de Atualização" >> $SERVICE_FILE
+    echo "" >> $SERVICE_FILE
+    echo "[Service]" >> $SERVICE_FILE
+    echo "Type=simple" >> $SERVICE_FILE
+    echo "ExecStart=$SCRIPT_PATH" >> $SERVICE_FILE
+
+    # Criar o arquivo do temporizador
+    echo "[Unit]" > $TIMER_FILE
+    echo "Description=Agendador diário para o script de atualização" >> $TIMER_FILE
+    echo "" >> $TIMER_FILE
+    echo "[Timer]" >> $TIMER_FILE
+    echo "OnCalendar=daily" >> $TIMER_FILE
+    echo "OnCalendar=02:00" >> $TIMER_FILE
+    echo "Persistent=true" >> $TIMER_FILE
+    echo "" >> $TIMER_FILE
+    echo "[Install]" >> $TIMER_FILE
+    echo "WantedBy=timers.target" >> $TIMER_FILE
+
+    # Recarregar o systemd
+    sudo systemctl daemon-reload
+
+    # Ativar e iniciar o temporizador
+    sudo systemctl enable --now atlz.timer
+
+    # Criando o link simbólico
+    sudo ln -s /opt/apps/atlz.sh /usr/local/bin/atlz
+
+    echo "Serviço e temporizador criados com sucesso."
+}
+
+uninstall_service() {
+    # Desativar e parar o temporizador
+    sudo systemctl disable --now atlz.timer
+
+    # Remover arquivos
+    sudo rm $SCRIPT_PATH
+    sudo rm $SERVICE_FILE
+    sudo rm $TIMER_FILE
+    sudo rm /usr/local/bin/atlz
+
+    echo "Serviço e temporizador removidos com sucesso."
+}
+
 # URL do script atlz.sh no repositório
 SCRIPT_URL="https://raw.githubusercontent.com/rgnldo/knot-resolver-suricata/master/atlz.sh"
 
 # Caminho onde o script atlz.sh será salvo
-SCRIPT_PATH="/opt/script_/atlz.sh"
-
-# Baixar o script atlz.sh
-sudo curl -o $SCRIPT_PATH $SCRIPT_URL
-sudo chmod +x $SCRIPT_PATH
+SCRIPT_PATH="/opt/apps/atlz.sh"
 
 # Criar o arquivo de serviço
 SERVICE_FILE="/etc/systemd/system/atlz.service"
-echo "[Unit]" > $SERVICE_FILE
-echo "Description=Script de Atualização" >> $SERVICE_FILE
-echo "" >> $SERVICE_FILE
-echo "[Service]" >> $SERVICE_FILE
-echo "Type=simple" >> $SERVICE_FILE
-echo "ExecStart=$SCRIPT_PATH" >> $SERVICE_FILE
 
 # Criar o arquivo do temporizador
 TIMER_FILE="/etc/systemd/system/atlz.timer"
-echo "[Unit]" > $TIMER_FILE
-echo "Description=Agendador diário para o script de atualização" >> $TIMER_FILE
-echo "" >> $TIMER_FILE
-echo "[Timer]" >> $TIMER_FILE
-echo "OnCalendar=daily" >> $TIMER_FILE
-echo "OnCalendar=02:00" >> $TIMER_FILE
-echo "Persistent=true" >> $TIMER_FILE
-echo "" >> $TIMER_FILE
-echo "[Install]" >> $TIMER_FILE
-echo "WantedBy=timers.target" >> $TIMER_FILE
 
-# Recarregar o systemd
-sudo systemctl daemon-reload
+while true; do
+    clear
+    echo "Instalação e Desinstalação do Serviço de Atualização"
+    echo "-----------------------------------------------------"
+    echo "1. Instalar serviço de atualização"
+    echo "2. Desinstalar serviço de atualização"
+    echo "3. Sair"
+    read -p "Escolha uma opção: " choice
 
-# Ativar e iniciar o temporizador
-sudo systemctl enable --now atlz.timer
-
-echo "Serviço e temporizador criados com sucesso."
+    case $choice in
+        1) install_service ;;
+        2) uninstall_service ;;
+        3) exit ;;
+        *) echo "Opção inválida. Tente novamente." ;;
+    esac
+done
