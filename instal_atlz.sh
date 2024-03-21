@@ -31,8 +31,8 @@ install_service() {
     # Ativar e iniciar o temporizador
     sudo systemctl enable --now atlz.timer
 
-    # Criando o link simbólico
-    sudo ln -s /opt/apps/atlz.sh /usr/local/bin/atlz
+    # Criar o link simbólico
+    sudo ln -s $SCRIPT_PATH /usr/local/bin/atlz
 
     echo "Serviço e temporizador criados com sucesso."
 }
@@ -45,7 +45,11 @@ uninstall_service() {
     sudo rm $SCRIPT_PATH
     sudo rm $SERVICE_FILE
     sudo rm $TIMER_FILE
-    sudo rm /usr/local/bin/atlz
+
+    # Remover o link simbólico, se existir
+    if [ -L "/usr/local/bin/atlz" ]; then
+        sudo rm /usr/local/bin/atlz
+    fi
 
     echo "Serviço e temporizador removidos com sucesso."
 }
