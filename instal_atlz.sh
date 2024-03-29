@@ -9,6 +9,8 @@ install_service() {
     echo "[Unit]" > $SERVICE_FILE
     echo "Description=Script de Atualização" >> $SERVICE_FILE
     echo "" >> $SERVICE_FILE
+    echo "[Install]" > $SERVICE_FILE
+    echo "WantedBy=multi-user.target" >> $SERVICE_FILE
     echo "[Service]" >> $SERVICE_FILE
     echo "Type=simple" >> $SERVICE_FILE
     echo "ExecStart=$SCRIPT_PATH" >> $SERVICE_FILE
