@@ -70,13 +70,21 @@ ip6tables -A INPUT -p vrrp -j ACCEPT
 echo "Permitir pacotes destinados ao endereço local"
 iptables -A INPUT -i lo -j ACCEPT
 
-echo "Permitir HTTPS e HTTP (TCP)"
+ccPermitir HTTPS e HTTP (TCP)"
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 
 echo "DNS (TCP UDP)"
 iptables -A INPUT -p tcp --dport 53 -j ACCEPT
 iptables -A INPUT -p udp --dport 53 -j ACCEPT
+
+echo "Configurar marcação para tráfego aceito"
+iptables -t mangle -A OUTPUT -p tcp --dport 53 -j MARK --set-mark 1
+iptables -t mangle -A OUTPUT -p udp --dport 53 -j MARK --set-mark 1
+iptables -t mangle -A OUTPUT -p tcp --dport 443 -j MARK --set-mark 1
+
+echo "Configurar regras de prioridade para a tabela de marcação"
+ip rule add fwmark 1 priority 100
 
 #echo "Permitir Wireguard (UDP)"
 #iptables -A INPUT -p udp --dport 60759 -j ACCEPT
