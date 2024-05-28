@@ -70,7 +70,7 @@ ip6tables -A INPUT -p vrrp -j ACCEPT
 echo "Permitir pacotes destinados ao endereço local"
 iptables -A INPUT -i lo -j ACCEPT
 
-ccPermitir HTTPS e HTTP (TCP)"
+echo "Permitir HTTPS e HTTP (TCP)"
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 
