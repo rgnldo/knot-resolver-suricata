@@ -92,8 +92,8 @@ Desinstalar() {
   read -r choice
   if [ "$choice" = "s" ]; then
     echo "Desinstalando o DNSCrypt-proxy..."
-    sudo rm -rf "$INSTALL_DIR"
-    sudo rm -f /etc/systemd/system/dnscrypt-proxy.service
+    rm -rf "$INSTALL_DIR"
+    rm -f /etc/systemd/system/dnscrypt-proxy.service
     echo "O DNSCrypt-proxy foi desinstalado."
     Reactivar_systemd_resolved
   else
@@ -114,18 +114,19 @@ Desabilitar_systemd_resolved() {
   echo "options edns0 trust-ad single-request-reopen" | sudo tee -a /etc/resolv.conf >/dev/null
   
   # Desabilita o systemd-resolved
-  sudo systemctl stop systemd-resolved
-  sudo systemctl disable systemd-resolved
-
+  systemctl stop systemd-resolved
+  systemctl disable systemd-resolved
+  systemctl daemon-reload
   echo "O systemd-resolved foi desabilitado e o arquivo /etc/resolv.conf foi atualizado com as configurações do DNSCrypt."
 }
 
 # Função para reativar o systemd-resolved
 Reativar_systemd_resolved() {
   echo "Reativando o systemd-resolved..."
-  sudo mv /etc/resolv.conf.bak /etc/resolv.conf
-  sudo systemctl enable systemd-resolved
-  sudo systemctl start systemd-resolved
+  mv /etc/resolv.conf.bak /etc/resolv.conf
+  systemctl enable systemd-resolved
+  systemctl start systemd-resolved
+  systemctl daemon-reload
   echo "O systemd-resolved foi reativado e o arquivo /etc/resolv.conf foi restaurado."
 }
 
