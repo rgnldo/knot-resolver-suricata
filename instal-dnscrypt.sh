@@ -50,9 +50,10 @@ Instalar() {
 
   # Instala o serviço
   echo "[INFO] Instalando o serviço..."
-  sudo "$INSTALL_DIR/dnscrypt-proxy" -service install
-  sudo systemctl enable dnscrypt-proxy.service
-  sudo systemctl start dnscrypt-proxy.service
+  "$INSTALL_DIR/dnscrypt-proxy" -service install
+  systemctl enable dnscrypt-proxy.service
+  systemctl start dnscrypt-proxy.service
+  systemctl daemon-reload
 
   # Inicia o servidor para validação
   echo "[INFO] Iniciando o servidor para validação..."
@@ -110,7 +111,7 @@ Desabilitar_systemd_resolved() {
   # Cria um novo resolv.conf com as informações do DNSCrypt
   echo "nameserver ::1" | sudo tee /etc/resolv.conf >/dev/null
   echo "nameserver 127.0.0.1" | sudo tee -a /etc/resolv.conf >/dev/null
-  echo "options edns0 single-request-reopen" | sudo tee -a /etc/resolv.conf >/dev/null
+  echo "options edns0 trust-ad single-request-reopen" | sudo tee -a /etc/resolv.conf >/dev/null
   
   # Desabilita o systemd-resolved
   sudo systemctl stop systemd-resolved
