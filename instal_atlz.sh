@@ -1,6 +1,11 @@
 #!/bin/bash
 
 install_service() {
+    # Verificar se a pasta /opt/apps existe, senão criar
+    if [ ! -d "/opt/apps" ]; then
+        sudo mkdir -p /opt/apps
+    fi
+
     # Baixar o script atlz.sh
     sudo curl -o $SCRIPT_PATH $SCRIPT_URL
     sudo chmod +x $SCRIPT_PATH
@@ -9,7 +14,7 @@ install_service() {
     echo "[Unit]" > $SERVICE_FILE
     echo "Description=Script de Atualização" >> $SERVICE_FILE
     echo "" >> $SERVICE_FILE
-    echo "[Install]" > $SERVICE_FILE
+    echo "[Install]" >> $SERVICE_FILE
     echo "WantedBy=multi-user.target" >> $SERVICE_FILE
     echo "[Service]" >> $SERVICE_FILE
     echo "Type=simple" >> $SERVICE_FILE
