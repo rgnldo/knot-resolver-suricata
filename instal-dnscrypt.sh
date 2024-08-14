@@ -44,6 +44,9 @@ Instalar() {
   echo "[INFO] Baixando e configurando o arquivo de configuração..."
   curl -sL "https://raw.githubusercontent.com/rgnldo/knot-resolver-suricata/master/dnscrypt-proxy.toml" --output "${INSTALL_DIR}/dnscrypt-proxy.toml"
   
+  # Configura IPv6
+  Configurar_IPV6
+
   # Exibe mensagens para configurar a porta e o cache
   Configurar_Porta
   Configurar_Cache
@@ -59,6 +62,27 @@ Instalar() {
   echo "[INFO] Iniciando o servidor para validação..."
   sudo "$INSTALL_DIR/dnscrypt-proxy"
   echo "[INFO] Por favor, verifique se o servidor está em execução corretamente. Pressione Ctrl+C para parar."
+}
+
+# Função para configurar o IPv6
+Configurar_IPV6() {
+  echo "Deseja habilitar o suporte a IPv6? [s/n]"
+  read -r habilitar_ipv6
+  if [[ "$habilitar_ipv6" == "s" ]]; then
+    sed -i "s/^ipv6_servers.*/ipv6_servers = true/" "${INSTALL_DIR}/dnscrypt-proxy.toml"
+    echo "O suporte a IPv6 foi habilitado no arquivo dnscrypt-proxy.toml."
+    echo "Por favor, insira a porta para o IPv6 (ex: 53):"
+    read -r ipv6_port
+    if [[ "$ipv6_port" =~ ^[0-9]+$ ]]; then
+      echo "listen_addresses = ['::1:$ipv6_port']" >> "${INSTALL_DIR}/dnscrypt-proxy.toml"
+      echo "O endereço de escuta foi configurado para '::1:$ipv6_port' no arquivo dnscrypt-proxy.toml."
+    else
+      echo "Por favor, insira um número de porta válido para o IPv6."
+    fi
+  else
+    sed -i "s/^ipv6_servers.*/ipv6_servers = false/" "${INSTALL_DIR}/dnscrypt-proxy.toml"
+    echo "O suporte a IPv6 foi desabilitado no arquivo dnscrypt-proxy.toml."
+  fi
 }
 
 # Função para configurar a porta do DNSCrypt-proxy
