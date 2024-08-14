@@ -1,68 +1,71 @@
 #!/bin/bash
+
 # Função para mostrar o menu
 show_menu() {
-	echo "1. Instalar regras de firewall"
-	echo "2. Desinstalar regras de firewall"
-	echo "3. Sair"
+    echo "1. Instalar regras de firewall"
+    echo "2. Desinstalar regras de firewall"
+    echo "3. Sair"
 }
+
+# Verifica se a pasta /etc/iptables existe, senão, cria
+    if [ ! -d "/etc/iptables" ]; then
+	echo "Pasta /etc/iptables não encontrada, criando..."
+	mkdir -p /etc/iptables
+    fi
+	
 # Função para instalar regras de firewall
 install_firewall() {
-	echo "Instalando regras de firewall..."
-	# Obtendo nome da interface principal
-	nic=$(ip route get 1.1.1.1 | awk '{print $5}')
-	# Verificando se a interface foi obtida
-	if [ -z "$nic" ]; then
-		echo "Erro: Interface de rede não identificada!"
-		exit 1
-	fi
-	# Perguntar política padrão
-	read -p "Defina a política padrão para INPUT (D para DROP, A para ACCEPT): " policy_input
-	read -p "Defina a política padrão para OUTPUT (D para DROP, A para ACCEPT): " policy_output
-	read -p "Defina a política padrão para FORWARD (D para DROP, A para ACCEPT): " policy_forward
-	# Converter políticas para os valores corretos
-	if [[ "$policy_input" == "D" ]]; then
-		policy_input="DROP"
-	elif [[ "$policy_input" == "A" ]]; then
-		policy_input="ACCEPT"
-	fi
-	if [[ "$policy_output" == "D" ]]; then
-		policy_output="DROP"
-	elif [[ "$policy_output" == "A" ]]; then
-		policy_output="ACCEPT"
-	fi
-	if [[ "$policy_forward" == "D" ]]; then
-		policy_forward="DROP"
-	elif [[ "$policy_forward" == "A" ]]; then
-		policy_forward="ACCEPT"
-	fi
-	# Verificar se as políticas são válidas
-	if [[ "$policy_input" != "DROP" && "$policy_input" != "ACCEPT" ]]; then
-		echo "Erro: Política de INPUT inválida!"
-		exit 1
-	fi
-	if [[ "$policy_output" != "DROP" && "$policy_output" != "ACCEPT" ]]; then
-		echo "Erro: Política de OUTPUT inválida!"
-		exit 1
-	fi
-	if [[ "$policy_forward" != "DROP" && "$policy_forward" != "ACCEPT" ]]; then
-		echo "Erro: Política de FORWARD inválida!"
-		exit 1
-	fi
-	# Perguntar portas TCP a serem abertas
-	read -p "Digite as portas TCP que deseja abrir no INPUT (separadas por espaço): " -a open_ports_tcp
-	# Perguntar portas UDP a serem abertas
-	read -p "Digite as portas UDP que deseja abrir no INPUT (separadas por espaço): " -a open_ports_udp
-	# Limpar regras existentes
-	echo "Limpando todas as regras e chains nas tabelas filter, nat e mangle"
-	iptables -F
-	iptables -t nat -F
-	iptables -t mangle -F
-	iptables -X
-	iptables -t nat -X
-	iptables -t mangle -X
-	echo "Removendo arquivos existentes"
-	rm -f /etc/iptables/simple_firewall.rules
-	rm -f /etc/iptables/ip6_simple_firewall.rules
+    echo "Instalando regras de firewall..."
+    # Obtendo nome da interface principal
+    nic=$(ip route get 1.1.1.1 | awk '{print $5}')
+    # Verificando se a interface foi obtida
+    if [ -z "$nic" ]; then
+        echo "Erro: Interface de rede não identificada!"
+        exit 1
+    fi
+
+    # Perguntar política padrão
+    read -p "Defina a política padrão para INPUT (D para DROP, A para ACCEPT, R para REJECT): " policy_input
+    read -p "Defina a política padrão para OUTPUT (D para DROP, A para ACCEPT, R para REJECT): " policy_output
+    read -p "Defina a política padrão para FORWARD (D para DROP, A para ACCEPT, R para REJECT): " policy_forward
+
+    # Converter políticas para os valores corretos
+    case "$policy_input" in
+        D) policy_input="DROP" ;;
+        A) policy_input="ACCEPT" ;;
+        R) policy_input="REJECT" ;;
+        *) echo "Erro: Política de INPUT inválida!"; exit 1 ;;
+    esac
+
+    case "$policy_output" in
+        D) policy_output="DROP" ;;
+        A) policy_output="ACCEPT" ;;
+        R) policy_output="REJECT" ;;
+        *) echo "Erro: Política de OUTPUT inválida!"; exit 1 ;;
+    esac
+
+    case "$policy_forward" in
+        D) policy_forward="DROP" ;;
+        A) policy_forward="ACCEPT" ;;
+        R) policy_forward="REJECT" ;;
+        *) echo "Erro: Política de FORWARD inválida!"; exit 1 ;;
+    esac
+
+    # Perguntar portas TCP a serem abertas
+    read -p "Digite as portas TCP que deseja abrir no INPUT (separadas por espaço): " -a open_ports_tcp
+    # Perguntar portas UDP a serem abertas
+    read -p "Digite as portas UDP que deseja abrir no INPUT (separadas por espaço): " -a open_ports_udp
+    # Limpar regras existentes
+    echo "Limpando todas as regras e chains nas tabelas filter, nat e mangle"
+    iptables -F
+    iptables -t nat -F
+    iptables -t mangle -F
+    iptables -X
+    iptables -t nat -X
+    iptables -t mangle -X
+    echo "Removendo arquivos existentes"
+	rm -f /etc/iptables/custom_firewall.rules
+	rm -f /etc/iptables/ip6_custom_firewall.rules
 	# Definir políticas padrão
 	iptables -P INPUT $policy_input
 	iptables -P OUTPUT $policy_output
