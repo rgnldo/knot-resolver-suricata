@@ -35,7 +35,8 @@
 
 ## List of local addresses and ports to listen to. Can be IPv4 and/or IPv6.
 ## Example with both IPv4 and IPv6:
-listen_addresses = ['127.0.0.1:5300', '[::1]:5300']
+listen_addresses = ['127.0.0.1:5300']
+#listen_addresses = ['[::1]:5300']
 ##
 ## To listen to all IPv4 addresses, use `listen_addresses = ['0.0.0.0:53']`
 ## To listen to all IPv4+IPv6 addresses, use `listen_addresses = ['[::]:53']`
@@ -62,7 +63,7 @@ max_clients = 250
 ipv4_servers = true
 
 # Use servers reachable over IPv6 -- Do not enable if you don't have IPv6 connectivity
-ipv6_servers = true
+ipv6_servers = false
 
 # Use servers implementing the DNSCrypt protocol
 dnscrypt_servers = true
@@ -88,7 +89,6 @@ require_nofilter = true
 # Server names to avoid even if they match all criteria
 disabled_server_names = []
 
-
 ## Always use TCP to connect to upstream servers.
 ## This can be useful if you need to route everything through Tor.
 ## Otherwise, leave this to `false`, as it doesn't improve security
@@ -111,12 +111,10 @@ http3 = false
 
 # proxy = 'socks5://127.0.0.1:9050'
 
-
 ## HTTP/HTTPS proxy
 ## Only for DoH servers
 
 # http_proxy = 'http://127.0.0.1:8888'
-
 
 ## How long a DNS query will wait for a response, in milliseconds.
 ## If you have a network with *a lot* of latency, you may need to
@@ -125,11 +123,9 @@ http3 = false
 
 timeout = 5000
 
-
 ## Keepalive for HTTP (HTTPS, HTTP/2) queries, in seconds
 
 keepalive = 30
-
 
 ## Add EDNS-client-subnet information to outgoing queries
 ##
@@ -378,7 +374,7 @@ reject_ttl = 10
 
 ## Enable a DNS cache to reduce latency and outgoing traffic
 
-cache = true
+cache = false
 
 
 ## Cache size
