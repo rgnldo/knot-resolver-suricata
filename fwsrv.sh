@@ -51,11 +51,46 @@ install_firewall() {
         *) echo "Erro: Política de FORWARD inválida!"; exit 1 ;;
     esac
 
-    # Perguntar portas TCP a serem abertas
-    read -p "Digite as portas TCP que deseja abrir no INPUT (separadas por espaço): " -a open_ports_tcp
-    # Perguntar portas UDP a serem abertas
-    read -p "Digite as portas UDP que deseja abrir no INPUT (separadas por espaço): " -a open_ports_udp
-    # Limpar regras existentes
+    # Portas TCP/UDP a serem abertas
+    
+    #!/bin/sh
+
+# Função para adicionar regras de firewall no iptables para TCP usando multiport
+add_iptables_rule_tcp_ipv4() {
+    local ports="$1"
+    echo "Adicionando regra TCP para IPv4 nas portas: $ports"
+    iptables -A INPUT -p tcp -m multiport --dports $ports -j ACCEPT
+}
+
+# Função para adicionar regras de firewall no iptables para UDP usando multiport
+add_iptables_rule_udp_ipv4() {
+    local ports="$1"
+    echo "Adicionando regra UDP para IPv4 nas portas: $ports"
+    iptables -A INPUT -p udp -m multiport --dports $ports -j ACCEPT
+}
+
+# Função para adicionar regras de firewall no ip6tables para TCP usando multiport
+add_iptables_rule_tcp_ipv6() {
+    local ports="$1"
+    echo "Adicionando regra TCP para IPv6 nas portas: $ports"
+    ip6tables -A INPUT -p tcp -m multiport --dports $ports -j ACCEPT
+}
+
+# Função para adicionar regras de firewall no ip6tables para UDP usando multiport
+add_iptables_rule_udp_ipv6() {
+    local ports="$1"
+    echo "Adicionando regra UDP para IPv6 nas portas: $ports"
+    ip6tables -A INPUT -p udp -m multiport --dports $ports -j ACCEPT
+}
+
+# Verifica se o netstat está instalado
+if ! command -v netstat >/dev/null 2>&1; then
+    echo "netstat não está instalado. Instalando..."
+    # Instalar netstat se necessário (comando pode variar dependendo da distribuição)
+    apt-get update && apt-get install -y net-tools
+fi
+
+  
     echo "Limpando todas as regras e chains nas tabelas filter, nat e mangle"
     iptables -F
     iptables -t nat -F
@@ -199,27 +234,7 @@ install_firewall() {
 	iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 	iptables -A INPUT -p tcp --syn -m connlimit --connlimit-above 20 --connlimit-mask 32 -j DROP
 	iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 5/second --limit-burst 10 -j ACCEPT
-  iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
   
-  # Verifica se o Pi-hole está instalado
-  if [ -d "/etc/pihole" ]; then
-  echo "Pi-hole detectado. Aplicando regras do iptables..."
-
-  # Pi-Hole
-  iptables -I INPUT 1 -s 127.0.0.0/8 -p tcp -m tcp --dport 53 -j ACCEPT
-  iptables -I INPUT 1 -s 127.0.0.0/8 -p udp -m udp --dport 53 -j ACCEPT
-  iptables -I INPUT 1 -p udp --dport 67:68 --sport 67:68 -j ACCEPT
-  iptables -I INPUT 1 -p tcp -m tcp --dport 4711 -i lo -j ACCEPT
-  iptables -I INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-  
-  # IPV6
-  ip6tables -I INPUT -p udp -m udp --sport 546:547 --dport 546:547 -j ACCEPT
-  ip6tables -I INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-
-  echo "Regras aplicadas com sucesso."
-  else
-  echo "Pi-hole não detectado. As regras não serão aplicadas."
-  fi
 
 	# Proteção contra estouro de buffer
 	echo "Proteção contra estouro de buffer"
@@ -244,45 +259,80 @@ install_firewall() {
 	#iptables -A INPUT -i lo -j ACCEPT
 	iptables -A OUTPUT -o lo -j ACCEPT
 
-	# Abrir portas TCP especificadas pelo usuário
-	if [ "${#open_ports_tcp[@]}" -gt 0 ]; then
-		for port in "${open_ports_tcp[@]}"; do
-			iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
-			echo "Porta TCP $port aberta no INPUT."
-		done
-	fi
-	# Abrir portas UDP especificadas pelo usuário
-	if [ "${#open_ports_udp[@]}" -gt 0 ]; then
-		for port in "${open_ports_udp[@]}"; do
-			iptables -A INPUT -p udp --dport "$port" -j ACCEPT
-			echo "Porta UDP $port aberta no INPUT."
-		done
-	fi
+# Obtém portas abertas para IPv4 (TCP e UDP)
+ports_ipv4_tcp=$(netstat -tuln | awk '/^tcp/ {print $4}' | awk -F: '{print $NF}' | sort -u | tr '\n' ',' | sed 's/,$//')
+ports_ipv4_udp=$(netstat -tuln | awk '/^udp/ {print $4}' | awk -F: '{print $NF}' | sort -u | tr '\n' ',' | sed 's/,$//')
+
+# Adiciona regras no iptables para as portas IPv4
+if [ -n "$ports_ipv4_tcp" ]; then
+    add_iptables_rule_tcp_ipv4 "$ports_ipv4_tcp"
+else
+    echo "Nenhuma porta TCP aberta encontrada para IPv4."
+fi
+
+if [ -n "$ports_ipv4_udp" ]; then
+    add_iptables_rule_udp_ipv4 "$ports_ipv4_udp"
+else
+    echo "Nenhuma porta UDP aberta encontrada para IPv4."
+fi
+
+# Obtém portas abertas para IPv6 (TCP e UDP)
+ports_ipv6_tcp=$(netstat -tuln | awk '/^tcp6/ {print $4}' | awk -F: '{print $NF}' | sort -u | tr '\n' ',' | sed 's/,$//')
+ports_ipv6_udp=$(netstat -tuln | awk '/^udp6/ {print $4}' | awk -F: '{print $NF}' | sort -u | tr '\n' ',' | sed 's/,$//')
+
+# Adiciona regras no ip6tables para as portas IPv6
+if [ -n "$ports_ipv6_tcp" ]; then
+    add_iptables_rule_tcp_ipv6 "$ports_ipv6_tcp"
+else
+    echo "Nenhuma porta TCP aberta encontrada para IPv6."
+fi
+
+if [ -n "$ports_ipv6_udp" ]; then
+    add_iptables_rule_udp_ipv6 "$ports_ipv6_udp"
+else
+    echo "Nenhuma porta UDP aberta encontrada para IPv6."
+fi
+
+# Adiciona regras para conexões estabelecidas e relacionadas usando conntrack
+iptables -I INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+ip6tables -I INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+echo "Regras para IPv4 e IPv6 adicionadas e salvas com sucesso."
+
 	# Ajustando MSS
 	echo "Ajustando MSS"
 	iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 	iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
-	# Salvar regras
-	iptables-save >/etc/iptables/simple_firewall.rules
-	echo "Gerando a execução..."
-	fw_script_file="/usr/local/bin/fw.sh"
-	# Verificar se o arquivo já existe
-	if [[ -e "$fw_script_file" ]]; then
-		echo "O arquivo $fw_script_file já existe. Removendo..."
-		sudo rm "$fw_script_file"
-	fi
-	echo "#!/bin/bash
+	
+# Salvar regras
+iptables-save >/etc/iptables/simple_firewall.rules
+ip6tables-save >/etc/iptables/simple6_firewall.rules
+
+echo "Gerando a execução..."
+
+fw_script_file="/usr/local/bin/fw.sh"
+# Verificar se o arquivo já existe
+if [[ -e "$fw_script_file" ]]; then
+    echo "O arquivo $fw_script_file já existe. Removendo..."
+    sudo rm "$fw_script_file"
+fi
+
+echo "#!/bin/bash
 iptables-restore < /etc/iptables/simple_firewall.rules
+ip6tables-restore < /etc/iptables/simple6_firewall.rules
 " | sudo tee "$fw_script_file"
-	sudo chmod +x "$fw_script_file"
-	echo "Arquivo $fw_script_file criado com sucesso."
-	# Criar o arquivo de serviço para systemd
-	fw_service_file="/etc/systemd/system/fw.service"
-	# Verificar se o arquivo de serviço já existe
-	if [[ -e "$fw_service_file" ]]; then
-		echo "O arquivo $fw_service_file já existe. Removendo..."
-		sudo rm "$fw_service_file"
-	fi
+
+sudo chmod +x "$fw_script_file"
+echo "Arquivo $fw_script_file criado com sucesso."
+
+# Criar o arquivo de serviço para systemd
+fw_service_file="/etc/systemd/system/fw.service"
+# Verificar se o arquivo de serviço já existe
+if [[ -e "$fw_service_file" ]]; then
+    echo "O arquivo $fw_service_file já existe. Removendo..."
+    sudo rm "$fw_service_file"
+fi
+
 	# Criar o arquivo de serviço
 	echo "[Unit]
 Description=Firewall
@@ -314,6 +364,7 @@ uninstall_firewall() {
 	# Remover arquivos de regras salvas
 	echo "Removendo arquivos de regras salvas"
 	rm -f /etc/iptables/simple_firewall.rules
+	rm -f /etc/iptables/simple2_firewall.rules
 	echo "Regras de firewall desinstaladas com sucesso."
 }
 # Loop principal para o menu interativo
@@ -336,3 +387,4 @@ while true; do
 		;;
 	esac
 done
+
