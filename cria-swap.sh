@@ -1,73 +1,183 @@
 #!/bin/bash
 
-# Função para verificar se o usuário é root
-check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        echo "Este script precisa ser executado como root."
-        exit 1
-    fi
-}
-
-# Função para exibir o menu de tamanhos de swap
-choose_swap_size() {
-    echo "Digite o tamanho da swap que você deseja criar (ex.: 1G, 512M): "
-    read -r swap_size
-}
-
-# Função para criar o arquivo de swap
-create_swap_file() {
-    echo "Criando arquivo de swap..."
-    fallocate -l "$swap_size" /swapfile
+# Função para criar um arquivo de swap usando dd
+create_swap_dd() {
+    local size=$1
+    echo "Criando arquivo de swap de ${size}MB usando dd..."
+    dd if=/dev/zero of=/swapfile bs=1M count="$size" status=progress
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
-    echo "Swap de $swap_size criada e ativada."
+    echo "Swap criado com dd."
 }
 
-# Função para tornar a swap persistente
-make_swap_persistent() {
-    echo "Tornando a swap persistente..."
-    echo '/swapfile none swap sw 0 0' >> /etc/fstab
-    echo "Swap adicionada ao /etc/fstab para persistência após o boot."
+# Função para criar um arquivo de swap usando fallocate
+create_swap_fallocate() {
+    local size=$1
+    echo "Criando arquivo de swap de ${size}MB usando fallocate..."
+    fallocate -l "${size}M" /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo "Swap criado com fallocate."
 }
 
-# Função para ajustar o sysctl.conf
-adjust_sysctl() {
-    echo "Ajustando parâmetros do sysctl.conf para melhor desempenho de swap..."
-
-    # Verifica a quantidade de memória RAM total
-    total_mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    vm_swappiness_value=60
-    vm_vfs_cache_pressure_value=100
-
-    # Define parâmetros baseados na quantidade de memória
-    if [ "$total_mem" -le 2097152 ]; then  # 2GB ou menos
-        vm_swappiness_value=10
-        vm_vfs_cache_pressure_value=50
-    elif [ "$total_mem" -le 4194304 ]; then  # 4GB ou menos
-        vm_swappiness_value=20
-        vm_vfs_cache_pressure_value=75
+# Função para configurar swap
+configure_swap() {
+    local method=$1
+    local size=$2
+    if [[ ! "$size" =~ ^[0-9]+$ ]]; then
+        echo "Tamanho inválido. Deve ser um número inteiro em MB."
+        return
     fi
-
-    # Aplica as configurações
-    echo "vm.swappiness=$vm_swappiness_value" >> /etc/sysctl.conf
-    echo "vm.vfs_cache_pressure=$vm_vfs_cache_pressure_value" >> /etc/sysctl.conf
-
-    # Recarrega as configurações do sysctl
-    sysctl -p
-
-    echo "Parâmetros do sysctl ajustados: vm.swappiness=$vm_swappiness_value, vm.vfs_cache_pressure=$vm_vfs_cache_pressure_value"
+    
+    case "$method" in
+        dd)
+            create_swap_dd "$size"
+            ;;
+        fallocate)
+            create_swap_fallocate "$size"
+            ;;
+        *)
+            echo "Método de criação de swap inválido."
+            ;;
+    esac
 }
 
-# Função principal do script
-main() {
-    check_root
-    choose_swap_size
-    create_swap_file
-    make_swap_persistent
-    adjust_sysctl
-    echo "Configuração de swap concluída com sucesso."
+# Função para remover o arquivo de swap
+remove_swap() {
+    echo "Desativando e removendo o arquivo de swap..."
+    swapoff /swapfile
+    rm -f /swapfile
+    echo "Swap removido com sucesso."
 }
 
-# Executa a função principal
-main
+# Função para adicionar valores ao arquivo /etc/sysctl.conf
+add_sysctl_conf() {
+    echo "Adicionando configurações ao /etc/sysctl.conf..."
+    local sysctl_values=(
+        "fs.file-max = 51200"
+        "net.core.rmem_max = 67108864"
+        "net.core.wmem_max = 67108864"
+        "net.core.netdev_max_backlog = 250000"
+        "net.core.somaxconn = 4096"
+        "net.core.default_qdisc=fq"
+        "net.ipv4.tcp_syncookies = 1"
+        "net.ipv4.tcp_tw_reuse = 1"
+        "net.ipv4.tcp_tw_recycle = 0"
+        "net.ipv4.tcp_fin_timeout = 30"
+        "net.ipv4.tcp_keepalive_time = 1200"
+        "net.ipv4.ip_local_port_range = 10000 65000"
+        "net.ipv4.tcp_max_syn_backlog = 8192"
+        "net.ipv4.tcp_max_tw_buckets = 5000"
+        "net.ipv4.tcp_fastopen = 3"
+        "net.ipv4.tcp_mem = 25600 51200 102400"
+        "net.ipv4.tcp_rmem = 4096 87380 67108864"
+        "net.ipv4.tcp_wmem = 4096 65536 67108864"
+        "net.ipv4.tcp_mtu_probing = 1"
+        "net.ipv4.tcp_congestion_control = bbr"
+    )
+    for value in "${sysctl_values[@]}"; do
+        if ! grep -qxF "$value" /etc/sysctl.conf; then
+            echo "$value" | tee -a /etc/sysctl.conf
+        else
+            echo "Configuração '$value' já presente em /etc/sysctl.conf"
+        fi
+    done
+}
+
+# Função para remover valores do arquivo /etc/sysctl.conf
+remove_sysctl_conf() {
+    echo "Removendo configurações do /etc/sysctl.conf..."
+    sed -i '/fs.file-max = 51200/d' /etc/sysctl.conf
+    sed -i '/net.core.rmem_max = 67108864/d' /etc/sysctl.conf
+    sed -i '/net.core.wmem_max = 67108864/d' /etc/sysctl.conf
+    sed -i '/net.core.netdev_max_backlog = 250000/d' /etc/sysctl.conf
+    sed -i '/net.core.somaxconn = 4096/d' /etc/sysctl.conf
+    sed -i '/net.core.default_qdisc=fq/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_syncookies = 1/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_tw_reuse = 1/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_tw_recycle = 0/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_fin_timeout = 30/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_keepalive_time = 1200/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.ip_local_port_range = 10000 65000/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_max_syn_backlog = 8192/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_max_tw_buckets = 5000/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_fastopen = 3/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_mem = 25600 51200 102400/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_rmem = 4096 87380 67108864/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_wmem = 4096 65536 67108864/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_mtu_probing = 1/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_congestion_control = bbr/d' /etc/sysctl.conf
+}
+
+# Função para adicionar valores ao arquivo /etc/security/limits.conf
+add_limits_conf() {
+    echo "Adicionando configurações ao /etc/security/limits.conf..."
+    local limits_values=(
+        "* soft nofile 51200"
+        "* hard nofile 51200"
+    )
+    for value in "${limits_values[@]}"; do
+        if ! grep -qxF "$value" /etc/security/limits.conf; then
+            echo "$value" | tee -a /etc/security/limits.conf
+        else
+            echo "Configuração '$value' já presente em /etc/security/limits.conf"
+        fi
+    done
+}
+
+# Função para remover valores do arquivo /etc/security/limits.conf
+remove_limits_conf() {
+    echo "Removendo configurações do /etc/security/limits.conf..."
+    sed -i '/\* soft nofile 51200/d' /etc/security/limits.conf
+    sed -i '/\* hard nofile 51200/d' /etc/security/limits.conf
+}
+
+# Menu interativo
+while true; do
+    echo "Selecione uma opção:"
+    echo "1) Inserir incremento de conectividade"
+    echo "2) Remover incremento de conectividade"
+    echo "3) Configurar swap"
+    echo "4) Remover swap"
+    echo "5) Sair"
+    read -p "Opção: " option
+
+    case $option in
+        1)
+            add_sysctl_conf
+            add_limits_conf
+            sysctl -p  # Aplicar as mudanças imediatamente
+            echo "Configurações aplicadas com sucesso."
+            ;;
+        2)
+            remove_sysctl_conf
+            remove_limits_conf
+            sysctl -p  # Aplicar as mudanças imediatamente
+            echo "Configurações removidas com sucesso."
+            ;;
+        3)
+            echo "Escolha o método para criar o arquivo de swap:"
+            echo "1) dd"
+            echo "2) fallocate"
+            read -p "Método: " method
+            if [ "$method" != "1" ] && [ "$method" != "2" ]; then
+                echo "Método inválido. Voltando ao menu."
+                continue
+            fi
+            read -p "Digite o tamanho do arquivo de swap em MB: " size
+            configure_swap "$([ "$method" = "1" ] && echo "dd" || echo "fallocate")" "$size"
+            ;;
+        4)
+            remove_swap
+            ;;
+        5)
+            echo "Saindo..."
+            exit 0
+            ;;
+        *)
+            echo "Opção inválida. Tente novamente."
+            ;;
+    esac
+done
