@@ -14,7 +14,7 @@ echo -e $TEXT_YELLOW
 echo 'APT update finalizado...'
 echo -e $TEXT_RESET
 
-apt-get upgrade -y
+apt upgrade -y
 echo -e $TEXT_YELLOW
 echo 'APT upgrade finalizado...'
 echo -e $TEXT_RESET
@@ -24,12 +24,12 @@ echo -e $TEXT_YELLOW
 echo 'APT distributive upgrade finalizado...'
 echo -e $TEXT_RESET
 
-apt -y --fix-broken install
+apt --fix-broken install  -y
 echo -e $TEXT_YELLOW
 echo 'APT Fix-broken finalizado...'
 echo -e $TEXT_RESET
 
-apt autoremove --purge && apt autoremove --purge $(deborphan)
+apt autoremove --purge -y && apt autoremove --purge $(deborphan) -y
 echo -e $TEXT_YELLOW
 echo 'APT auto remove finalizado...'
 echo -e $TEXT_RESET
