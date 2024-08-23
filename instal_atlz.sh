@@ -8,13 +8,13 @@ install_service() {
     fi
 
     # Verificar se deborphan está instalado, senão instalar
-    if ! dpkg -s deborphan &>/dev/null; então
+    if ! dpkg -s deborphan &>/dev/null; then
         echo "Instalando deborphan..."
         apt-get update && apt-get install -y deborphan
     fi
 
     # Verificar se a pasta /opt/apps existe, senão criar
-    if [ ! -d "/opt/apps" ]; então
+    if [ ! -d "/opt/apps" ]; then
         mkdir -p /opt/apps
     fi
 
@@ -72,7 +72,7 @@ uninstall_service() {
     rm $TIMER_FILE
 
     # Remover o link simbólico, se existir
-    if [ -L "/usr/local/bin/atlz" ]; então
+    if [ -L "/usr/local/bin/atlz" ]; then
         rm /usr/local/bin/atlz
     fi
 
