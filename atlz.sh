@@ -29,7 +29,7 @@ echo -e $TEXT_YELLOW
 echo 'APT Fix-broken finalizado...'
 echo -e $TEXT_RESET
 
-sudo apt-get autoremove -y
+apt autoremove --purge && apt autoremove --purge $(deborphan)
 echo -e $TEXT_YELLOW
 echo 'APT auto remove finalizado...'
 echo -e $TEXT_RESET
