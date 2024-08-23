@@ -1,6 +1,18 @@
 #!/bin/bash
 
 install_service() {
+    # Verificar se needrestart está instalado, senão instalar
+    if ! dpkg -s needrestart &>/dev/null; then
+        echo "Instalando needrestart..."
+        sudo apt-get update && sudo apt-get install -y needrestart
+    fi
+
+    # Verificar se deborphan está instalado, senão instalar
+    if ! dpkg -s deborphan &>/dev/null; then
+        echo "Instalando deborphan..."
+        sudo apt-get update && sudo apt-get install -y deborphan
+    fi
+
     # Verificar se a pasta /opt/apps existe, senão criar
     if [ ! -d "/opt/apps" ]; then
         sudo mkdir -p /opt/apps
