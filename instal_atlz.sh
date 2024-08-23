@@ -4,23 +4,23 @@ install_service() {
     # Verificar se needrestart está instalado, senão instalar
     if ! dpkg -s needrestart &>/dev/null; then
         echo "Instalando needrestart..."
-        sudo apt-get update && sudo apt-get install -y needrestart
+        apt-get update && apt-get install -y needrestart
     fi
 
     # Verificar se deborphan está instalado, senão instalar
-    if ! dpkg -s deborphan &>/dev/null; then
+    if ! dpkg -s deborphan &>/dev/null; então
         echo "Instalando deborphan..."
-        sudo apt-get update && sudo apt-get install -y deborphan
+        apt-get update && apt-get install -y deborphan
     fi
 
     # Verificar se a pasta /opt/apps existe, senão criar
-    if [ ! -d "/opt/apps" ]; then
-        sudo mkdir -p /opt/apps
+    if [ ! -d "/opt/apps" ]; então
+        mkdir -p /opt/apps
     fi
 
     # Baixar o script atlz.sh
-    sudo curl -o $SCRIPT_PATH $SCRIPT_URL
-    sudo chmod +x $SCRIPT_PATH
+    curl -o $SCRIPT_PATH $SCRIPT_URL
+    chmod +x $SCRIPT_PATH
 
     # Criar o arquivo de serviço
     echo "[Unit]" > $SERVICE_FILE
@@ -45,29 +45,35 @@ install_service() {
     echo "WantedBy=timers.target" >> $TIMER_FILE
 
     # Recarregar o systemd
-    sudo systemctl daemon-reload
+    systemctl daemon-reload
 
     # Ativar e iniciar o temporizador
-    sudo systemctl enable --now atlz.timer
+    systemctl enable --now atlz.timer
+
+    # Ativar e iniciar o serviço
+    systemctl enable --now atlz.service
 
     # Criar o link simbólico
-    sudo ln -s $SCRIPT_PATH /usr/local/bin/atlz
+    ln -s $SCRIPT_PATH /usr/local/bin/atlz
 
     echo "Serviço e temporizador criados com sucesso."
 }
 
 uninstall_service() {
     # Desativar e parar o temporizador
-    sudo systemctl disable --now atlz.timer
+    systemctl disable --now atlz.timer
+
+    # Desativar e parar o serviço
+    systemctl disable --now atlz.service
 
     # Remover arquivos
-    sudo rm $SCRIPT_PATH
-    sudo rm $SERVICE_FILE
-    sudo rm $TIMER_FILE
+    rm $SCRIPT_PATH
+    rm $SERVICE_FILE
+    rm $TIMER_FILE
 
     # Remover o link simbólico, se existir
-    if [ -L "/usr/local/bin/atlz" ]; then
-        sudo rm /usr/local/bin/atlz
+    if [ -L "/usr/local/bin/atlz" ]; então
+        rm /usr/local/bin/atlz
     fi
 
     echo "Serviço e temporizador removidos com sucesso."
