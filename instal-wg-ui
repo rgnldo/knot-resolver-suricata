@@ -1,0 +1,255 @@
+#!/bin/bash
+
+# Função para obter a última versão do WireGuard UI
+get_latest_version() {
+    curl --silent "https://api.github.com/repos/ngoduykhanh/wireguard-ui/releases/latest" | \
+    grep '"tag_name":' | \
+    sed -E 's/.*"([^"]+)".*/\1/' 
+}
+
+# Função para gerar chaves WireGuard
+generate_wg_keys() {
+    umask 077
+    wg genkey | tee privatekey | wg pubkey > publickey
+    private_key=$(cat privatekey)
+    public_key=$(cat publickey)
+    rm -f privatekey publickey
+}
+
+# Função para criar a interface wg0
+create_wg0_conf() {
+    generate_wg_keys
+
+    read -p "Digite o IP local para wg0 (exemplo: 10.0.0.1/24): " wg0_ip
+    read -p "Digite a porta para wg0 (exemplo: 51820): " wg0_port
+
+    cat <<EOF > /etc/wireguard/wg0.conf
+[Interface]
+PrivateKey = $private_key
+Address = $wg0_ip
+ListenPort = $wg0_port
+SaveConfig = true
+
+# Adicione aqui os peers se necessário
+#[Peer]
+#PublicKey = <chave_do_peer>
+#AllowedIPs = <IP_do_peer>
+
+EOF
+    chmod 600 /etc/wireguard/wg0.conf
+}
+
+# Função para verificar e aplicar net.ipv4.ip_forward
+apply_ip_forwarding() {
+    if sysctl -n net.ipv4.ip_forward | grep -q 1; then
+        echo "IP forwarding já está ativado."
+    else
+        echo "Ativando IP forwarding..."
+        echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
+        sysctl -p
+    fi
+}
+
+# Função para instalação do WireGuard e configuração do sistema
+install_wireguard() {
+    echo "Atualizando listas de pacotes..."
+    apt update -y
+
+    echo "Atualizando pacotes instalados..."
+    apt upgrade -y
+
+    # Verificando e ativando IP Forwarding
+    apply_ip_forwarding
+
+    echo "Instalando WireGuard..."
+    apt install wireguard -y
+
+    # Criando e configurando a interface wg0
+    echo "Criando a interface wg0..."
+    create_wg0_conf
+
+    # Pedindo ao usuário para definir o nome de usuário e senha do WireGuard UI
+    read -p "Digite o nome de usuário para o WireGuard UI: " ui_username
+    read -sp "Digite a senha para o WireGuard UI: " ui_password
+    echo
+
+    # Obtendo a última versão do WireGuard UI
+    latest_version=$(get_latest_version)
+    echo "Versão mais recente do WireGuard UI: $latest_version"
+
+    # Corrigindo a URL de download para evitar o erro 404
+    ui_version="${latest_version#v}"  # Remove o 'v' do início
+    download_url="https://github.com/ngoduykhanh/wireguard-ui/releases/download/${latest_version}/wireguard-ui-v${ui_version}-linux-amd64.tar.gz"
+    echo "Baixando WireGuard UI versão $ui_version..."
+    wget -P /tmp "$download_url"
+
+    if [[ $? -ne 0 ]]; then
+        echo "Erro ao baixar WireGuard UI. Verifique a versão e o link."
+        exit 1
+    fi
+
+    echo "Extraindo WireGuard UI..."
+    tar -xzvf /tmp/wireguard-ui-*.tar.gz -C /tmp
+
+    echo "Criando a pasta wireguard-ui..."
+    mkdir -p /opt/wireguard-ui
+    mv /tmp/wireguard-ui /opt/wireguard-ui
+
+    # Verificação e aplicação de regras do Iptables
+    if ! iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null; then
+        echo "Aplicando regra para porta 443..."
+        iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+    else
+        echo "Regra para porta 443 já existe."
+    fi
+
+    if ! iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null; then
+        echo "Aplicando regra para porta 80..."
+        iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    else
+        echo "Regra para porta 80 já existe."
+    fi
+
+    if ! iptables -C INPUT -p tcp --dport 5000 -j ACCEPT 2>/dev/null; then
+        echo "Aplicando regra para porta 5000..."
+        iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+    else
+        echo "Regra para porta 5000 já existe."
+    fi
+
+    if ! iptables -C INPUT -p udp --dport 51820 -j ACCEPT 2>/dev/null; then
+        echo "Aplicando regra para porta 51820..."
+        iptables -A INPUT -p udp --dport 51820 -j ACCEPT
+    else
+        echo "Regra para porta 51820 já existe."
+    fi
+
+    # Salvando regras do iptables
+    iptables-save > /etc/iptables/rules.v4
+
+    # Criação e configuração do arquivo .env
+    echo "WGUI_USERNAME=$ui_username" > /opt/wireguard-ui/.env
+    echo "WGUI_PASSWORD=$ui_password" >> /opt/wireguard-ui/.env
+
+    # Criando scripts postdown.sh e postup.sh
+    cat <<EOF > /opt/wireguard-ui/postdown.sh
+#!/usr/bin/bash
+iptables -t nat -D POSTROUTING -o <INTERFACE> -j MASQUERADE
+EOF
+
+    cat <<EOF > /opt/wireguard-ui/postup.sh
+#!/usr/bin/bash
+iptables -t nat -A POSTROUTING -o <INTERFACE> -j MASQUERADE
+EOF
+
+    chmod +x /opt/wireguard-ui/post*.sh 
+
+    # Criando serviço para WireGuard UI Daemon
+    cat <<EOF > /etc/systemd/system/wireguard-ui-daemon.service
+[Unit]
+Description=WireGuard UI Daemon
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+WorkingDirectory=/opt/wireguard-ui
+EnvironmentFile=/opt/wireguard-ui/.env
+ExecStart=/opt/wireguard-ui/wireguard-ui -bind-address "0.0.0.0:5000"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    cat <<EOF > /etc/systemd/system/wgui.service
+[Unit]
+Description=Restart WireGuard
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart wg-quick@wg0.service
+
+[Install]
+RequiredBy=wgui.path
+EOF
+
+    cat <<EOF > /etc/systemd/system/wgui.path
+[Unit]
+Description=Watch /etc/wireguard/wg0.conf for changes
+
+[Path]
+PathModified=/etc/wireguard/wg0.conf
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable wg-quick@wg0
+    systemctl start wg-quick@wg0
+    systemctl enable wireguard-ui-daemon.service
+    systemctl start wireguard-ui-daemon.service
+    systemctl enable wgui.{path,service}
+    systemctl start wgui.{path,service}
+
+    echo "Instalação e configuração concluídas."
+}
+
+# Função para desinstalação do WireGuard e remoção de configurações
+uninstall_wireguard() {
+    echo "Removendo WireGuard..."
+    apt remove --purge wireguard -y
+
+    echo "Removendo WireGuard UI..."
+    rm -rf /opt/wireguard-ui
+
+    echo "Removendo serviços WireGuard UI Daemon..."
+    systemctl stop wgui.{path,service}
+    systemctl disable wgui.{path,service}
+    rm /etc/systemd/system/wireguard-ui-daemon.service
+    rm /etc/systemd/system/wgui.{path,service}
+
+    echo "Removendo regras do iptables..."
+    iptables -D INPUT -p tcp --dport 443 -j ACCEPT
+    iptables -D INPUT -p tcp --dport 80 -j ACCEPT
+    iptables -D INPUT -p tcp --dport 5000 -j ACCEPT
+    iptables -D INPUT -p udp --dport 51820 -j ACCEPT
+    iptables-save > /etc/iptables/rules.v4
+
+    echo "Removendo configuração da interface wg0..."
+    systemctl stop wg-quick@wg0
+    systemctl disable wg-quick@wg0
+    rm /etc/wireguard/wg0.conf
+
+    echo "Remoção concluída."
+}
+
+# Menu interativo
+while true; do
+    echo "Escolha uma opção:"
+    echo "1. Instalar WireGuard e configurar"
+    echo "2. Desinstalar WireGuard e remover configurações"
+    echo "3. Sair"
+    read -p "Opção: " option
+
+    case $option in
+       
+        1)
+            install_wireguard
+            ;;
+        2)
+            uninstall_wireguard
+            ;;
+        3)
+            echo "Saindo..."
+            exit 0
+            ;;
+        *)
+            echo "Opção inválida. Tente novamente."
+            ;;
+    esac
+done
+
