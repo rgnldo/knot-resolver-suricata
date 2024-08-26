@@ -9,6 +9,8 @@ create_swap_dd() {
     mkswap /swapfile
     swapon /swapfile
     echo "Swap criado com dd."
+    add_swap_sysctl_conf  # Adiciona configurações de swap ao sysctl.conf
+    add_swap_fstab        # Adiciona entrada ao fstab
 }
 
 # Função para criar um arquivo de swap usando fallocate
@@ -20,6 +22,8 @@ create_swap_fallocate() {
     mkswap /swapfile
     swapon /swapfile
     echo "Swap criado com fallocate."
+    add_swap_sysctl_conf  # Adiciona configurações de swap ao sysctl.conf
+    add_swap_fstab        # Adiciona entrada ao fstab
 }
 
 # Função para configurar swap
@@ -49,7 +53,57 @@ remove_swap() {
     echo "Desativando e removendo o arquivo de swap..."
     swapoff /swapfile
     rm -f /swapfile
+    remove_swap_fstab   # Remove entrada do fstab
     echo "Swap removido com sucesso."
+    remove_swap_sysctl_conf  # Remove configurações de swap do sysctl.conf
+}
+
+# Função para adicionar configuração de swap ao /etc/fstab
+add_swap_fstab() {
+    if ! grep -q '/swapfile' /etc/fstab; then
+        echo "/swapfile none swap sw 0 0" >> /etc/fstab
+        echo "Entrada de swap adicionada ao /etc/fstab."
+    else
+        echo "Entrada de swap já presente no /etc/fstab."
+    fi
+}
+
+# Função para remover configuração de swap do /etc/fstab
+remove_swap_fstab() {
+    if grep -q '/swapfile' /etc/fstab; then
+        sed -i '/\/swapfile none swap sw 0 0/d' /etc/fstab
+        echo "Entrada de swap removida do /etc/fstab."
+    else
+        echo "Nenhuma entrada de swap encontrada no /etc/fstab."
+    fi
+}
+
+# Função para adicionar configurações de swap ao arquivo /etc/sysctl.conf
+add_swap_sysctl_conf() {
+    echo "Adicionando configurações de swap ao /etc/sysctl.conf..."
+    local swap_sysctl_values=(
+        "vm.swappiness = 10"
+        "vm.vfs_cache_pressure = 50"
+        "vm.dirty_ratio = 15"
+        "vm.dirty_background_ratio = 5"
+    )
+    for value in "${swap_sysctl_values[@]}"; do
+        if ! grep -qxF "$value" /etc/sysctl.conf; then
+            echo "$value" | tee -a /etc/sysctl.conf
+        else
+            echo "Configuração '$value' já presente em /etc/sysctl.conf"
+        fi
+    done
+    sysctl -p  # Aplicar as mudanças imediatamente
+}
+
+# Função para remover valores de swap do arquivo /etc/sysctl.conf
+remove_swap_sysctl_conf() {
+    echo "Removendo configurações de swap do /etc/sysctl.conf..."
+    sed -i '/vm.swappiness = 10/d' /etc/sysctl.conf
+    sed -i '/vm.vfs_cache_pressure = 50/d' /etc/sysctl.conf
+    sed -i '/vm.dirty_ratio = 15/d' /etc/sysctl.conf
+    sed -i '/vm.dirty_background_ratio = 5/d' /etc/sysctl.conf
 }
 
 # Função para adicionar valores ao arquivo /etc/sysctl.conf
@@ -84,6 +138,7 @@ add_sysctl_conf() {
             echo "Configuração '$value' já presente em /etc/sysctl.conf"
         fi
     done
+    sysctl -p  # Aplicar as mudanças imediatamente
 }
 
 # Função para remover valores do arquivo /etc/sysctl.conf
@@ -134,50 +189,58 @@ remove_limits_conf() {
     sed -i '/\* hard nofile 51200/d' /etc/security/limits.conf
 }
 
-# Menu interativo
+# Menu principal
 while true; do
-    echo "Selecione uma opção:"
-    echo "1) Inserir incremento de conectividade"
-    echo "2) Remover incremento de conectividade"
-    echo "3) Configurar swap"
-    echo "4) Remover swap"
-    echo "5) Sair"
+    echo "Escolha uma opção:"
+    echo "1) Adicionar configurações de desempenho ao /etc/sysctl.conf"
+    echo "2) Remover configurações de desempenho do /etc/sysctl.conf"
+    echo "3) Adicionar configurações de limites ao /etc/security/limits.conf"
+    echo "4) Remover configurações de limites do /etc/security/limits.conf"
+    echo "5) Criar arquivo de swap"
+    echo "6) Remover arquivo de swap"
+    echo "7) Sair"
     read -p "Opção: " option
 
-    case $option in
+    case "$option" in
         1)
             add_sysctl_conf
-            add_limits_conf
-            sysctl -p  # Aplicar as mudanças imediatamente
-            echo "Configurações aplicadas com sucesso."
             ;;
         2)
             remove_sysctl_conf
-            remove_limits_conf
-            sysctl -p  # Aplicar as mudanças imediatamente
-            echo "Configurações removidas com sucesso."
             ;;
         3)
-            echo "Escolha o método para criar o arquivo de swap:"
-            echo "1) dd"
-            echo "2) fallocate"
-            read -p "Método: " method
-            if [ "$method" != "1" ] && [ "$method" != "2" ]; then
-                echo "Método inválido. Voltando ao menu."
-                continue
-            fi
-            read -p "Digite o tamanho do arquivo de swap em MB: " size
-            configure_swap "$([ "$method" = "1" ] && echo "dd" || echo "fallocate")" "$size"
+            add_limits_conf
             ;;
         4)
-            remove_swap
+            remove_limits_conf
             ;;
         5)
+            echo "Escolha o método para criar o swap:"
+            echo "1) dd"
+            echo "2) fallocate"
+            read -p "Método (1 ou 2): " swap_method
+            read -p "Tamanho do swap em MB: " swap_size
+            case "$swap_method" in
+                1)
+                    configure_swap "dd" "$swap_size"
+                    ;;
+                2)
+                    configure_swap "fallocate" "$swap_size"
+                    ;;
+                *)
+                    echo "Método inválido."
+                    ;;
+            esac
+            ;;
+        6)
+            remove_swap
+            ;;
+        7)
             echo "Saindo..."
             exit 0
             ;;
         *)
-            echo "Opção inválida. Tente novamente."
+            echo "Opção inválida."
             ;;
     esac
 done
