@@ -116,7 +116,7 @@ install_firewall() {
     # Criar cadeias personalizadas
     echo "Criando cadeias personalizadas"
     iptables -N SSHLOCKOUT 2>/dev/null
-    iptables -N syn_flood 2>/dev/null
+    #iptables -N syn_flood 2>/dev/null
     iptables -N port-scan 2>/dev/null
 
     # Obtendo interfaces OpenVPN e WireGuard
@@ -227,10 +227,10 @@ install_firewall() {
     iptables -A INPUT -j port-scan
 
     # Proteção contra SYN Flood
-    echo "Proteção contra SYN Flood"
-    iptables -A INPUT -p tcp --syn -j syn_flood
-    iptables -A syn_flood -m limit --limit 1/s --limit-burst 3 -j RETURN
-    iptables -A syn_flood -j DROP
+    #echo "Proteção contra SYN Flood"
+    #iptables -A INPUT -p tcp --syn -j syn_flood
+    #iptables -A syn_flood -m limit --limit 1/s --limit-burst 3 -j RETURN
+    #iptables -A syn_flood -j DROP
 
     # Configurar NAT
     echo "Configurando NAT moderado"
@@ -240,8 +240,8 @@ install_firewall() {
     echo "Aplicando outras regras"
     iptables -A INPUT -m state --state INVALID -j DROP
     iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-    iptables -A INPUT -p tcp --syn -m connlimit --connlimit-above 20 --connlimit-mask 32 -j DROP
-    iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 5/second --limit-burst 10 -j ACCEPT
+    #iptables -A INPUT -p tcp --syn -m connlimit --connlimit-above 20 --connlimit-mask 32 -j DROP
+    #iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 5/second --limit-burst 10 -j ACCEPT
 
     # Proteção contra estouro de buffer
     echo "Proteção contra estouro de buffer"
@@ -263,7 +263,7 @@ install_firewall() {
 
     # Regras padrão para a interface loopback
     echo "Permitindo tráfego na interface loopback"
-    #iptables -A INPUT -i lo -j ACCEPT
+    iptables -A INPUT -i lo -j ACCEPT
     iptables -A OUTPUT -o lo -j ACCEPT
 
     # Obtém portas abertas para IPv4 (TCP e UDP)
