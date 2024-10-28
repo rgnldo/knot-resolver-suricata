@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Persistent MAC Address randomizer for Linux desktop
+#
+
+install_script() {
+    # Verificar NetworkManager
+    sudo systemctl is-active --quiet NetworkManager
+    if [ "$?" -ne "0" ]; then
+        echo "[-] NetworkManager não está ativo. Certifique-se de que você está em uma distribuição Linux suportada e tente novamente."
+        exit 1
+    fi
+
+    echo "[+] Selecione como deseja se conectar..."
+
+    # Configuração Wi-Fi
+    wifisetting="random" # Padrão
+    read -t 60 -p 'MAC aleatório para cada conexão Wi-Fi (1), ou MAC aleatório persistente por SSID (2)? ' wifisettingnum
+    if [ "$wifisettingnum" != "1" ] && [ "$wifisettingnum" != "2" ]; then
+        echo "[-] Entrada inválida. Tente novamente com uma seleção 1 ou 2."
+        exit 1
+    elif [ "$wifisettingnum" == "1" ]; then
+        wifisetting="random"
+    elif [ "$wifisettingnum" == "2" ]; then
+        wifisetting="stable"
+    fi
+
+    # Configuração Ethernet
+    ethernetsetting="stable" # Padrão
+    read -t 60 -p 'MAC aleatório para cada conexão Ethernet com fio (1), ou MAC aleatório persistente por rede (2)? ' ethernetsettingnum
+    if [ "$ethernetsettingnum" != "1" ] && [ "$ethernetsettingnum" != "2" ]; then
+        echo "[-] Entrada inválida. Tente novamente com uma seleção 1 ou 2."
+        exit 1
+    elif [ "$ethernetsettingnum" == "1" ]; then
+        ethernetsetting="random"
+    elif [ "$ethernetsettingnum" == "2" ]; then
+        ethernetsetting="stable"
+    fi
+
+    # Construir arquivo de configuração
+    echo "[+] Criando arquivo de configuração..."
+    sudo rm /tmp/00-macrandomize.conf >/dev/null 2>&1
+    cat << EOF > /tmp/00-macrandomize.conf
+[device]
+wifi.scan-rand-mac-address=yes
+
+[connection]
+wifi.cloned-mac-address=$wifisetting
+ethernet.cloned-mac-address=$ethernetsetting
+connection.stable-id=\${CONNECTION}/\${BOOT}
+EOF
+
+    sudo mv /tmp/00-macrandomize.conf /etc/NetworkManager/conf.d/00-macrandomize.conf
+    sudo chown root:root /etc/NetworkManager/conf.d/00-macrandomize.conf
+    echo "[+] Configuração criada em /etc/NetworkManager/conf.d/00-macrandomize.conf"
+
+    # Reiniciar NetworkManager
+    echo "[+] Reiniciando o serviço NetworkManager..."
+    sudo systemctl restart NetworkManager
+    if [ $? -ne 0 ]; then
+        echo "[-] Erro ao reiniciar o serviço NetworkManager."
+        exit 1
+    fi
+
+    # Verificar MAC Address
+    echo "[+] MAC address após a reinicialização:"
+    ip -f link address
+}
+
+uninstall_script() {
+    echo "[+] Removendo script e arquivo de configuração..."
+    sudo rm /etc/NetworkManager/conf.d/00-macrandomize.conf
+    sudo systemctl restart NetworkManager
+    echo "[+] Script desinstalado com sucesso."
+}
+
+echo "Escolha uma opção:"
+echo "1) Instalar"
+echo "2) Desinstalar"
+read -p "Digite sua escolha: " choice
+
+case "$choice" in
+    1) install_script ;;
+    2) uninstall_script ;;
+    *) echo "Opção inválida. Saindo..." ;;
+esac
