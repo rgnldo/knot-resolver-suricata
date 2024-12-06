@@ -222,7 +222,7 @@ install_firewall() {
 
     # Proteção contra varredura de portas
     echo "Proteção contra varredura de portas"
-    iptables -A port-scan -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j RETURN
+    iptables -A port-scan -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 5/s --limit-burst 10 -j RETURN
     iptables -A port-scan -p tcp --tcp-flags SYN,ACK,FIN,RST RST -j DROP
     iptables -A INPUT -j port-scan
 
@@ -245,8 +245,8 @@ install_firewall() {
 
     # Proteção contra estouro de buffer
     echo "Proteção contra estouro de buffer"
-    iptables -A INPUT -p tcp --tcp-flags ALL NONE -m limit --limit 1/hour -j ACCEPT
-    iptables -A INPUT -p tcp --tcp-flags ALL ALL -m limit --limit 1/hour -j ACCEPT
+    iptables -A INPUT -p tcp --tcp-flags ALL NONE -m limit --limit 10/min --limit-burst 5 -j DROP
+    iptables -A INPUT -p tcp --tcp-flags ALL ALL -m limit --limit 10/min --limit-burst 5 -j DROP
 
     # Bloqueando tráfego destinado à porta 0
     echo "Bloqueando tráfego destinado à porta 0"
@@ -330,6 +330,7 @@ install_firewall() {
     echo "Ajustando MSS"
     iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
     iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+    iptables -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $nic -j TCPMSS --clamp-mss-to-pmtu
 
     # Salvar regras
     iptables-save >/etc/iptables/simple_firewall.rules
