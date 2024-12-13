@@ -37,6 +37,17 @@ configure_cron() {
     echo "Arquivo de cron criado com sucesso em $CRON_DIR/$CRON_FILE."
 }
 
+# Função para executar o script imediatamente
+run_script_now() {
+    echo "Executando o script $SCRIPT_NAME agora..."
+    "$INSTALL_DIR/$SCRIPT_NAME"
+    if [ $? -eq 0 ]; then
+        echo "Script $SCRIPT_NAME executado com sucesso."
+    else
+        echo "Erro ao executar o script $SCRIPT_NAME. Verifique o log para mais detalhes."
+    fi
+}
+
 # Função para desinstalar o script e remover o agendamento do cron
 uninstall_script() {
     echo "Desinstalando o script $SCRIPT_NAME..."
@@ -61,7 +72,7 @@ uninstall_script() {
 # Menu principal
 main_menu() {
     echo "========== Menu Principal =========="
-    echo "1. Instalar e configurar o script"
+    echo "1. Instalar, configurar e executar o script"
     echo "2. Desinstalar o script e remover o agendamento"
     echo "3. Sair"
     read -p "Escolha uma opção: " OPTION
@@ -70,7 +81,8 @@ main_menu() {
         1)
             install_script
             configure_cron
-            echo "Instalação e configuração concluídas."
+            run_script_now
+            echo "Instalação, configuração e execução concluídas."
             ;;
         2)
             uninstall_script
