@@ -35,7 +35,7 @@
 
 ## List of local addresses and ports to listen to. Can be IPv4 and/or IPv6.
 ## Example with both IPv4 and IPv6:
-listen_addresses = ['127.0.0.1:5300']
+listen_addresses = ['127.0.0.1:53']
 #listen_addresses = ['[::1]:5300']
 ##
 ## To listen to all IPv4 addresses, use `listen_addresses = ['0.0.0.0:53']`
@@ -69,7 +69,7 @@ ipv6_servers = false
 dnscrypt_servers = true
 
 # Use servers implementing the DNS-over-HTTPS protocol
-doh_servers = false
+doh_servers = true
 
 # Use servers implementing the Oblivious DoH protocol
 odoh_servers = true
@@ -799,10 +799,10 @@ fragments_blocked = ['cisco', 'cisco-ipv6', 'cisco-familyshield', 'cisco-familys
 #    { server_name='example-server-2', via=['sdns://gRIxMzcuNzQuMjIzLjIzNDo0NDM'] }
 # ]
 
-# DecaTec: Configure anonymized DNS (DNSCrypt and ODoH)
-#routes = [
-#   { server_name='*', via=['*'] }
-#]
+# Configure anonymized DNS (DNSCrypt and ODoH)
+routes = [
+   { server_name='*', via=['*'] }
+]
 
 #routes = [
 #  { server_name='cs-brazil', via=['*'] }
@@ -810,27 +810,27 @@ fragments_blocked = ['cisco', 'cisco-ipv6', 'cisco-familyshield', 'cisco-familys
 #  { server_name='odoh-crypto-sx', via=['*'] }
 #]
 
- routes = [
-    { server_name='cs-brazil', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
-    { server_name='dnscrypt-de-blahdns-ipv6', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
-    { server_name='dnscrypt-de-blahdns-ipv4', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
-    { server_name='cs-de', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
-    { server_name='cs-berlin', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
-    { server_name='cs-dus1', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
-    { server_name='cs-dus2', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
-    { server_name='cs-dus4', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
-    { server_name='dct-de1', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
-    { server_name='dns.watch', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
-    { server_name='dns.watch-ipv6', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
-    { server_name='odoh-koki-ams', via=['odohrelay-crypto-sx', 'odohrelay-surf', 'odohrelay-ibksturm'] },
-    { server_name='odoh-cloudflare', via=['odohrelay-crypto-sx', 'odohrelay-surf', 'odohrelay-ibksturm'] },
-    { server_name='odoh-crypto-sx', via=['odohrelay-koki-ams', 'odohrelay-surf', 'odohrelay-ibksturm'] }
-  ]
+# routes = [
+#    { server_name='cs-brazil', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
+#    { server_name='dnscrypt-de-blahdns-ipv6', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
+#    { server_name='dnscrypt-de-blahdns-ipv4', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
+#    { server_name='cs-de', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
+#    { server_name='cs-berlin', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
+#    { server_name='cs-dus1', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
+#    { server_name='cs-dus2', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
+#    { server_name='cs-dus4', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
+#    { server_name='dct-de1', via=['anon-techsaviours.org', 'anon-scaleway-ams'] },
+#    { server_name='dns.watch', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
+#    { server_name='dns.watch-ipv6', via=['anon-techsaviours.org', 'anon-cs-de', 'anon-cs-berlin', 'anon-cs-dus1', 'anon-cs-dus2', 'anon-cs-dus4'] },
+#    { server_name='odoh-koki-ams', via=['odohrelay-crypto-sx', 'odohrelay-surf', 'odohrelay-ibksturm'] },
+#    { server_name='odoh-cloudflare', via=['odohrelay-crypto-sx', 'odohrelay-surf', 'odohrelay-ibksturm'] },
+#    { server_name='odoh-crypto-sx', via=['odohrelay-koki-ams', 'odohrelay-surf', 'odohrelay-ibksturm'] }
+#  ]
 
 
 ## Skip resolvers incompatible with anonymization instead of using them directly
 
-skip_incompatible = false
+skip_incompatible = true
 
 
 ## If public server certificates for a non-conformant server cannot be
