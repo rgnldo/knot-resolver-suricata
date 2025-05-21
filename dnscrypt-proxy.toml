@@ -39,6 +39,7 @@ force_tcp = false
 
 # Suporte a HTTP/3 (DoH3, desativado)
 http3 = true
+http3_probe = true
 
 # Tempo limite para consultas DNS (ms)
 timeout = 2500
@@ -170,6 +171,26 @@ cache_neg_max_ttl = 600
     refresh_delay = 24
     prefix = ''
 
+###############################################################################
+#                        Servers with known bugs                               #
+###############################################################################
+
+[broken_implementations]
+
+fragments_blocked = [
+  'cisco',
+  'cisco-ipv6',
+  'cisco-familyshield',
+  'cisco-familyshield-ipv6',
+  'cisco-sandbox',
+  'cleanbrowsing-adult',
+  'cleanbrowsing-adult-ipv6',
+  'cleanbrowsing-family',
+  'cleanbrowsing-family-ipv6',
+  'cleanbrowsing-security',
+  'cleanbrowsing-security-ipv6',
+]
+
 ################################
 #        DNS Anonimizado       #
 ################################
@@ -195,3 +216,22 @@ routes = [
 
 # Pular servidores incompatíveis
 skip_incompatible = true
+
+[dns64]
+prefix = ['64:ff9b::/96']
+
+###############################################################################
+#                            Monitoring UI                                     #
+###############################################################################
+
+[monitoring_ui]
+
+## Enable the monitoring UI
+enabled = true
+
+## Listen address for the monitoring UI
+listen_address = "127.0.0.1:8080"
+
+username = ""
+password = ""
+
