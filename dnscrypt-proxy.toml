@@ -45,10 +45,10 @@ http3 = true
 http3_probe = true
 
 # Tempo limite para consultas DNS (ms)
-timeout = 2500
+timeout = 5000
 
 # Keepalive para consultas HTTP (s)
-keepalive = 60
+keepalive = 30
 
 # Estratégia de balanceamento de carga
 lb_strategy = 'p2'
