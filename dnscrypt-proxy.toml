@@ -9,7 +9,7 @@
 ##################################
 
 # Endereços locais e portas para escutar
-listen_addresses = ['127.0.2.1:53']
+listen_addresses = ['127.0.2.1:53', '[::1]:53']
 
 # Número máximo de conexões clientes simultâneas
 max_clients = 250
@@ -18,13 +18,13 @@ max_clients = 250
 ipv4_servers = true
 
 # Usar servidores IPv6 (desativado sem conectividade IPv6)
-ipv6_servers = false
+ipv6_servers = true
 
 # Usar servidores DNSCrypt (desativado)
-dnscrypt_servers = false
+dnscrypt_servers = true
 
 # Usar servidores DNS-over-HTTPS
-doh_servers = true
+doh_servers = false
 
 # Usar servidores Oblivious DoH
 odoh_servers = true
@@ -60,7 +60,7 @@ cert_refresh_delay = 240
 dnscrypt_ephemeral_keys = false
 
 # Desativar tickets de sessão TLS (aumenta privacidade)
-tls_disable_session_tickets = false
+tls_disable_session_tickets = true
 
 # Resolvedores de bootstrap
 bootstrap_resolvers = ['1.1.1.1:53', '8.8.8.8:53']
@@ -82,7 +82,7 @@ log_files_max_backups = 1  # Número de backups
 #########################
 
 # Bloquear consultas IPv6
-block_ipv6 = true
+block_ipv6 = false
 
 # Bloquear consultas sem nome de domínio
 block_unqualified = true
@@ -113,6 +113,25 @@ cache_max_ttl = 3600
 cache_neg_min_ttl = 60
 cache_neg_max_ttl = 600
 
+
+##########################
+#    Blocklists ADS      #
+##########################
+
+#[blocked_names]
+
+#blocked_names_file = '/opt/serv_/bloqlist/adbloq'
+
+
+##########################
+#      Permissivo        #
+##########################
+
+#[allowed_ips]
+
+# allowed_ips_file = 'allowed-ips.txt'
+
+
 #########################
 #        Fontes         #
 #########################
@@ -128,12 +147,12 @@ cache_neg_max_ttl = 600
     prefix = ''
 
   # Relés de DNS anonimizado
-  #[sources.relays]
-  # urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/relays.md', 'https://ipv6.download.dnscrypt.info/resolvers-list/v3/relays.md']
-  # cache_file = 'relays.md'
-  # minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-  # refresh_delay = 72
-  # prefix = ''
+  [sources.relays]
+  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/relays.md', 'https://ipv6.download.dnscrypt.info/resolvers-list/v3/relays.md']
+  cache_file = 'relays.md'
+  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+  refresh_delay = 72
+  prefix = ''
 
   # Servidores ODoH
   [sources.odoh-servers]
@@ -155,12 +174,24 @@ cache_neg_max_ttl = 600
 #        DNS Anonimizado       #
 ################################
 
-#[anonymized_dns]
+[anonymized_dns]
 
 # Rotas para DNS anonimizado
-#routes = [
+# routes = [
 #   { server_name='*', via=['*'] }
-#]
+# ]
+
+routes = [
+{ server_name = 'odoh-cloudflare', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-jp.tiarap.org', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-marco.cx', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-crypto-sx', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-ibksturm', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-jp.tiar.app', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-koki-ams', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'odoh-koki-se', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
+{ server_name = 'cs-brazil', via=['anon-cs-brazil'] }
+]
 
 # Pular servidores incompatíveis
-#skip_incompatible = true
+skip_incompatible = true
