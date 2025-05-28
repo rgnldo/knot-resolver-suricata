@@ -51,7 +51,7 @@ timeout = 5000
 keepalive = 30
 
 # Estratégia de balanceamento de carga
-lb_strategy = 'p2'
+lb_strategy = 'wp2'
 lb_estimator = true
 
 # Nível de log (0-6, 6=somente erros fatais)
@@ -231,6 +231,21 @@ enabled = true
 
 ## Listen address for the monitoring UI
 listen_address = "127.0.0.1:8080"
+
+## Enable query logging in the monitoring UI
+enable_query_log = true
+
+## Privacy level for the monitoring UI
+## 0: show all details including client IPs
+## 1: anonymize client IPs (default)
+## 2: aggregate data only (no individual queries or domains shown)
+privacy_level = 1
+
+## Default: 100
+max_query_log_entries = 100
+
+## Default: 1
+max_memory_mb = 1
 
 username = ""
 password = ""
