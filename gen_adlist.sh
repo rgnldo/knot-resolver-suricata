@@ -1,51 +1,97 @@
-#!/bin/bash
+#!/bin/sh
 
-# Cores
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# --- Configurações ---
+INSTALL_DIR="/opt/dnscrypt-proxy"
+BLOCKLIST_FILE="$INSTALL_DIR/blocked-names.txt"
+ALLOWLIST_FILE="$INSTALL_DIR/allowed-names.txt"
 
-DIR="/opt/dnscrypt-proxy"
-BLOCK_FILE="$DIR/blocked-names.txt"
-ALLOW_URL="https://codeberg.org/hagezi/mirror2/raw/branch/main/dns-blocklists/domains/whitelist-referral.txt"
+# URL da sua Allowlist (Whitelist)
+ALLOWLIST_URL="https://codeberg.org/hagezi/mirror2/raw/branch/main/dns-blocklists/domains/whitelist-referral.txt"
+
+# URLs das Blocklists (Fontes)
 LISTS="
 https://codeberg.org/hagezi/mirror2/raw/branch/main/dns-blocklists/wildcard/pro-onlydomains.txt
 https://codeberg.org/hagezi/mirror2/raw/branch/main/dns-blocklists/wildcard/tif.medium-onlydomains.txt
 "
 
-echo -e "${CYAN}[Adlist]${NC} Iniciando processamento de listas..."
+# Arquivos Temporários (em RAM se /tmp for tmpfs)
+TEMP_ALLOW="/tmp/allowlist_mem.txt"
+TEMP_RAW="/tmp/blocklist_raw.txt"
 
-# Download silencioso e rápido
-download() { curl -fsSL "$1"; }
+# --- Funções ---
+download() {
+    if command -v curl > /dev/null 2>&1; then
+        curl -fsSL --connect-timeout 10 "$1"
+    else
+        wget -qO- "$1"
+    fi
+}
 
-# 1. Processar Allowlist em memória
-echo -ne "📥 Baixando Allowlist... "
-ALLOW=$(download "$ALLOW_URL" | awk '/^[[:space:]]*(#|$)/ {next} {sub(/[[:space:]]*#.*/,""); gsub(/^[[:space:]]+|[[:space:]]+$/,""); if(length($0)) { if(substr($0,1,2)=="*.") print $0; else print "*."$0 }}')
-echo -e "${GREEN}OK${NC}"
+echo "[1/4] Baixando e normalizando Allowlist..."
+# Baixa e converte para *.dominio.com para comparação precisa
+download "$ALLOWLIST_URL" | awk '
+    /^[[:space:]]*(#|$)/ { next }
+    { 
+        sub(/[[:space:]]*#.*/, ""); 
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "");
+        if (length($0)) {
+            if (substr($0, 1, 2) == "*.") print $0;
+            else print "*." $0;
+        }
+    }' > "$TEMP_ALLOW"
 
-# 2. Baixar e Processar Blocklists
-echo -ne "📥 Processando Blocklists (Wildcard Mode)... "
-(
-  echo "$ALLOW" > /tmp/allow_mem.txt
-  for url in $LISTS; do download "$url"; done > /tmp/raw_block.txt
+echo "[2/4] Baixando Blocklists..."
+> "$TEMP_RAW"
+for url in $LISTS; do
+    download "$url" >> "$TEMP_RAW"
+done
 
-  LC_ALL=C awk '
-    NR==FNR { allow[$0]=1; next }
-    /^[[:space:]]*(#|$)/ {next}
-    { sub(/[[:space:]]*#.*/,""); gsub(/^[[:space:]]+|[[:space:]]+$/,""); dom="" }
-    $1 ~ /^[0-9]+\.[0-9]+/ { dom=$2 }
-    $0 ~ /^[aA]ddress=\// { split($0,a,"/"); dom=a[2] }
-    $0 ~ /^[a-zA-Z0-9\*]/ && dom=="" { dom=$0 }
-    dom != "" {
-      if(substr(dom,1,2)!="*.") dom="*."dom
-      if(!(dom in allow)) print dom
+echo "[3/4] Compilando listas (Alta Performance - AWK Mode)..."
+# Processamento ultra-rápido: carrega allowlist em hash e filtra blocklist
+# LC_ALL=C acelera o processamento de texto em até 3x
+LC_ALL=C awk '
+    # Passo 1: Carregar allowlist na memoria
+    NR == FNR {
+        allow[$0] = 1
+        next
     }
-  ' /tmp/allow_mem.txt /tmp/raw_block.txt | sort -u > "$BLOCK_FILE"
-)
-echo -e "${GREEN}OK${NC}"
+    # Passo 2: Ignorar comentarios e linhas vazias na blocklist
+    /^[[:space:]]*(#|$)/ { next }
+    { 
+        sub(/[[:space:]]*#.*/, ""); 
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "");
+        domain = ""
+    }
+    # Formato HOSTS (0.0.0.0 dominio.com)
+    $1 ~ /^[0-9]+\.[0-9]+/ { domain = $2 }
+    # Formato DNSMASQ (address=/dominio.com/...)
+    $0 ~ /^[aA]ddress=\// { split($0, a, "/"); domain = a[2] }
+    # Formato Direto (dominio.com ou *.dominio.com)
+    $0 ~ /^[a-zA-Z0-9\*]/ && domain == "" { domain = $0 }
+    
+    domain != "" {
+        # Normaliza para *.dominio.com
+        if (substr(domain, 1, 2) != "*.") domain = "*." domain
+        # Filtra contra a allowlist em memoria
+        if (!(domain in allow)) {
+            print domain
+        }
+    }
+' "$TEMP_ALLOW" "$TEMP_RAW" | sort -u > "$BLOCKLIST_FILE.tmp"
+
+echo "[4/4] Finalizando arquivos..."
+# Adiciona cabeçalho e move para o local definitivo
+{
+    echo "# Blocklist gerada em: $(date)"
+    echo "# Formato: *.dominio.com"
+    cat "$BLOCKLIST_FILE.tmp"
+} > "$BLOCKLIST_FILE"
+
+# Salva uma copia da allowlist processada para referencia do usuario
+cp "$TEMP_ALLOW" "$ALLOWLIST_FILE"
 
 # Limpeza
-rm -f /tmp/allow_mem.txt /tmp/raw_block.txt
+rm -f "$TEMP_ALLOW" "$TEMP_RAW" "$BLOCKLIST_FILE.tmp"
 
-TOTAL=$(wc -l < "$BLOCK_FILE")
-echo -e "${CYAN}[Adlist]${NC} Bloqueio atualizado: ${GREEN}$TOTAL${NC} domínios wildcards."
+TOTAL=$(wc -l < "$BLOCKLIST_FILE")
+echo "✓ Sucesso! $TOTAL domínios únicos bloqueados."
