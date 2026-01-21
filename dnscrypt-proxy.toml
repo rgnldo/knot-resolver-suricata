@@ -1,61 +1,88 @@
-##############################################
+#############################################
 #                                            #
 #        Configuração dnscrypt-proxy         #
 #                                            #
 ##############################################
 
-##################################
-#         Configurações globais  #
-##################################
+##############################################
+#         Configurações globais              #
+##############################################
+
+server_names = [
+	'cs-brazil',                   # -- Brazil.
+	'cs-brazil6',                  # -- Brazil IPv6.
+	'dnscry.pt-saopaulo-ipv4',     # -- Sao Paulo, Brazil.
+	'dnscry.pt-saopaulo-ipv6',     # -- Sao Paulo, Brazil IPv6.
+	'cs-czech',                    # -- Prague, Czech Republic.
+	'dnscry.pt-prague-ipv6',       # -- Prague, Czech Republic IPv6.
+	'cs-poland',                   # -- Warsaw, Poland.
+	'cs-ch',                       # -- Switzerland.
+	'cs-austria',                  # -- Vienna, Austria.
+	'dnscry.pt-bratislava-ipv4',   # -- Bratislava, Slovakia.
+	'cs-hungary',                  # -- Budapest, Hungary.
+	'cs-finland',                  # -- Finland.
+	'cs-ro',                       # -- Romania.
+	'dnscry.pt-bogota-ipv4',       # -- Bogota, Colombia.
+]
 
 # Endereços locais e portas para escutar
-listen_addresses = ['127.0.2.1:53', '[::1]:53']
+# listen_addresses = [
+#  '127.0.0.1:53',
+#  '[::1]:53',
+#  '192.168.20.1:53',
+#  '10.11.12.1:53',
+#  '10.11.11.1:53'
+#]
 
-# Número máximo de conexões clientes simultâneas
+listen_addresses = ['127.0.0.2:53']
+
+# Número máximo de conexões clientes simultâneas (aumentado para performance)
 max_clients = 250
 
 # Usar servidores IPv4
 ipv4_servers = true
 
-# Usar servidores IPv6 (desativado sem conectividade IPv6)
+# Usar servidores IPv6
 ipv6_servers = true
 
-# Usar servidores DNSCrypt (desativado)
+# Usar servidores DNSCrypt (essencial para os servidores brasileiros)
 dnscrypt_servers = true
 
-# Usar servidores DNS-over-HTTPS
+# Usar servidores DNS-over-HTTPS (desativado para focar em DNSCrypt e ODoH)
 doh_servers = false
 
-# Usar servidores Oblivious DoH
-odoh_servers = true
+# Usar servidores Oblivious DoH (ativado conforme requisito)
+odoh_servers = false
 
 # Requisitos para servidores remotos
-require_dnssec = false      # DNSSEC não requerido
-require_nolog = true        # Servidores sem logs
-require_nofilter = true     # Servidores sem filtros
+require_dnssec = false       
+require_nolog = true        
+require_nofilter = true     
 
-# Forçar conexões TCP (desativado)
+# Forçar conexões TCP (desativado, pode reduzir performance)
 force_tcp = false
 
-## SOCKS proxy
+## SOCKS proxy (mantido como comentário)
 # proxy = 'socks5://dnscrypt:dnscrypt@127.0.0.1:9050'
 
 # Suporte a HTTP/3 (DoH3, desativado)
-http3 = true
-http3_probe = true
+http3 = false
+http3_probe = false
 
-# Tempo limite para consultas DNS (ms)
+# Tempo limite para consultas DNS (ms - reduzido para failover mais rápido)
 timeout = 5000
 
-# Keepalive para consultas HTTP (s)
+# Keepalive para consultas HTTP (s - aumentado para ODoH)
 keepalive = 30
 
 # Estratégia de balanceamento de carga
 lb_strategy = 'wp2'
 lb_estimator = true
+# timeout_load_reduction = 0.75
+# enable_hot_reload = false
 
-# Nível de log (0-6, 6=somente erros fatais)
-log_level = 6
+# Nível de log
+# log_level = 2
 
 # Intervalo para recarregar certificados (min)
 cert_refresh_delay = 240
@@ -64,28 +91,31 @@ cert_refresh_delay = 240
 dnscrypt_ephemeral_keys = false
 
 # Desativar tickets de sessão TLS (aumenta privacidade)
-tls_disable_session_tickets = true
+tls_disable_session_tickets = false
 
-# Resolvedores de bootstrap
-bootstrap_resolvers = ['1.1.1.1:53', '8.8.8.8:53']
+# Ignorar validação de data/hora em certificados (útil em roteadores sem RTC)
+cert_ignore_timestamp = true
+
+# Resolvedores de bootstrap (usando servidores brasileiros para maior velocidade inicial)
+bootstrap_resolvers = ['45.90.28.241:53', '1.1.1.1:53']
 
 # Ignorar configurações DNS do sistema
 ignore_system_dns = true
 
-# Verificação de conectividade
-netprobe_timeout = -1      # Esperar indefinidamente
-netprobe_address = '1.1.1.1:53'
+# Verificação de conectividade (usando um servidor brasileiro)
+netprobe_timeout = 60
+netprobe_address = '45.90.30.241:53'
 
 # Rotação de logs
-log_files_max_size = 10    # Tamanho máximo em MB
-log_files_max_age = 7      # Dias para manter backups
-log_files_max_backups = 1  # Número de backups
+log_files_max_size = 5
+log_files_max_age = 7
+log_files_max_backups = 1
 
 #########################
 #        Filtros        #
 #########################
 
-# Bloquear consultas IPv6
+# Bloquear consultas IPv6 (desativado para permitir resolução)
 block_ipv6 = false
 
 # Bloquear consultas sem nome de domínio
@@ -94,8 +124,12 @@ block_unqualified = true
 # Bloquear zonas não delegadas
 block_undelegated = true
 
-# TTL para respostas bloqueadas
+# TTL para respostas bloqueadas (aumentado para reduzir tentativas)
 reject_ttl = 10
+
+# Add EDNS-client-subnet information to outgoing queries
+# edns_client_subnet = []
+# blocked_query_response = 'refused'
 
 ###########################
 #        Cache DNS        #
@@ -104,10 +138,10 @@ reject_ttl = 10
 # Ativar cache DNS
 cache = true
 
-# Tamanho do cache
+# Tamanho do cache 
 cache_size = 4096
 
-# TTL mínimo/máximo para entradas
+# TTL mínimo/máximo para entradas (ajustado para melhor cache)
 cache_min_ttl = 2400
 cache_max_ttl = 86400
 
@@ -115,23 +149,32 @@ cache_max_ttl = 86400
 cache_neg_min_ttl = 60
 cache_neg_max_ttl = 600
 
-##########################
-#    Blocklists ADS      #
-##########################
+###############################################################################
+#                            Local DoH server                                  #
+###############################################################################
 
-#[blocked_names]
+[local_doh]
 
-#blocked_names_file = '/opt/serv_/bloqlist/adbloq'
+listen_addresses = ['0.0.0.0:3000']
+path           = '/dns-query'
+cert_file      = 'localhost.pem'
+cert_key_file  = 'localhost.pem'
 
+############################
+#    blocklists            #
+############################
 
-##########################
-#      Permissivo        #
-##########################
+[blocked_names]
 
-#[allowed_ips]
+blocked_names_file = 'blocked-names.txt'
 
-# allowed_ips_file = 'allowed-ips.txt'
+############################
+#    Allowlists            #
+############################
 
+[allowed_names]
+
+allowed_names_file = 'allowed-names.txt'
 
 #########################
 #        Fontes         #
@@ -141,35 +184,35 @@ cache_neg_max_ttl = 600
 
   # Servidores públicos
   [sources.public-resolvers]
-    urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md', 'https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md', 'https://ipv6.download.dnscrypt.info/resolvers-list/v3/public-resolvers.md']
+    urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md', 'https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md']
     cache_file = 'public-resolvers.md'
     minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
     refresh_delay = 72
     prefix = ''
 
-  # Relés de DNS anonimizado
+  # Relês de DNS anonimizado
   [sources.relays]
-  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/relays.md', 'https://ipv6.download.dnscrypt.info/resolvers-list/v3/relays.md']
-  cache_file = 'relays.md'
-  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-  refresh_delay = 72
-  prefix = ''
+    urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/relays.md']
+    cache_file = 'relays.md'
+    minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+    refresh_delay = 72
+    prefix = ''
 
   # Servidores ODoH
-  [sources.odoh-servers]
-    urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-servers.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-servers.md', 'https://ipv6.download.dnscrypt.info/resolvers-list/v3/odoh-servers.md']
-    cache_file = 'odoh-servers.md'
-    minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-    refresh_delay = 24
-    prefix = ''
+  # [sources.odoh-servers]
+  #  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-servers.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-servers.md']
+  #  cache_file = 'odoh-servers.md'
+  #  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+  #  refresh_delay = 72
+  #  prefix = ''
 
-  # Relés ODoH
-  [sources.odoh-relays]
-    urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-relays.md', 'https://ipv6.download.dnscrypt.info/resolvers-list/v3/odoh-relays.md']
-    cache_file = 'odoh-relays.md'
-    minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-    refresh_delay = 24
-    prefix = ''
+  # Relês ODoH
+  # [sources.odoh-relays]
+  #  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-relays.md']
+  #  cache_file = 'odoh-relays.md'
+  #  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+  #  refresh_delay = 72
+  #  prefix = ''
 
 ###############################################################################
 #                        Servers with known bugs                               #
@@ -197,28 +240,130 @@ fragments_blocked = [
 
 [anonymized_dns]
 
-# Rotas para DNS anonimizado
-# routes = [
-#   { server_name='*', via=['*'] }
-# ]
-
 routes = [
-{ server_name = 'odoh-cloudflare', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-jp.tiarap.org', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-marco.cx', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-crypto-sx', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-ibksturm', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-jp.tiar.app', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-koki-ams', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'odoh-koki-se', via=['odohrelay-ams', 'odohrelay-crypto-sx', 'odohrelay-ibksturm', 'odohrelay-se'] },
-{ server_name = 'cs-brazil', via=['anon-cs-brazil'] }
+	{server_name = 'dnscry.pt-saopaulo-ipv4', via = [
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-austria',                 # -- Austria.
+		'dnscry.pt-anon-saopaulo-ipv4',    # -- Sao Paulo, Brazil.
+	]},
+	{server_name = 'dnscry.pt-saopaulo-ipv6', via = [
+		'anon-cs-brazil6',                 # -- Brazil IPv6.
+		'anon-cs-ch6',                     # -- Switzerland IPv6.
+		'anon-cs-czech6',                  # -- Czech Republic IPv6.
+		'anon-cs-poland6',                 # -- Poland IPv6.
+		'anon-cs-austria6',                # -- Austria IPv6.
+		'dnscry.pt-anon-saopaulo-ipv6',    # -- Sao Paulo, Brazil IPv6.
+	]},
+	{server_name = 'dnscry.pt-bogota-ipv4', via = [
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'dnscry.pt-anon-bogota-ipv4',      # -- Bogota, Colombia.
+		'dnscry.pt-anon-saopaulo-ipv4',    # -- Sao Paulo, Brazil.
+	]},
+	{server_name = 'dnscry.pt-bogota-ipv6', via = [
+		'anon-cs-brazil6',                 # -- Brazil IPv6.
+		'anon-cs-ch6',                     # -- Switzerland IPv6.
+		'anon-cs-czech6',                  # -- Czech Republic IPv6.
+		'anon-cs-poland6',                 # -- Poland IPv6.
+		'dnscry.pt-anon-bogota-ipv6',      # -- Bogota, Colombia IPv6.
+		'dnscry.pt-anon-saopaulo-ipv6',    # -- Sao Paulo, Brazil IPv6.
+	]},
+	{server_name = 'cs-czech', via = [
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-cs-hungary',                 # -- Hungary.
+	]},
+	{server_name = 'cs-poland', via = [
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-cs-hungary',                 # -- Hungary.
+	]},
+	{server_name = 'cs-ch', via = [
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-ibksturm',                   # -- Switzerland.
+	]},
+	{server_name = 'cs-austria', via = [
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-cs-hungary',                 # -- Hungary.
+	]},
+	{server_name = 'dnscry.pt-prague-ipv6', via = [
+		'anon-cs-czech6',                  # -- Czech Republic IPv6.
+		'anon-cs-poland6',                 # -- Poland IPv6.
+		'anon-cs-ch6',                     # -- Switzerland IPv6.
+		'anon-cs-austria6',                # -- Austria IPv6.
+		'anon-cs-brazil6',                 # -- Brazil IPv6.
+		'anon-cs-hungary6',                # -- Hungary IPv6.
+	]},
+	{server_name = 'dnscry.pt-bratislava-ipv4', via = [
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-brazil',                  # -- Brazil.
+		'anon-cs-hungary',                 # -- Hungary.
+	]},
+	{server_name = 'cs-hungary', via = [
+		'anon-cs-hungary',                 # -- Hungary.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-brazil',                  # -- Brazil.
+	]},
+	{server_name = 'cs-finland', via = [
+		'anon-cs-finland',                 # -- Finland.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-brazil',                  # -- Brazil.
+	]},
+	{server_name = 'cs-ro', via = [
+		'anon-cs-ro',                      # -- Romania.
+		'anon-cs-czech',                   # -- Czech Republic.
+		'anon-cs-poland',                  # -- Poland.
+		'anon-cs-ch',                      # -- Switzerland.
+		'anon-cs-austria',                 # -- Austria.
+		'anon-cs-brazil',                  # -- Brazil.
+	]}
 ]
 
 # Pular servidores incompatíveis
 skip_incompatible = true
 
-[dns64]
-prefix = ['64:ff9b::/96']
+# Usar fallback direto caso o certificado falhe, forçando o uso de relês para todas as consultas roteadas.
+direct_cert_fallback = false
+
+# [dns64]
+# prefix = ['64:ff9b::/96']
+
+###############################################################################
+#                           Encriptação de IP                                 #
+###############################################################################
+
+[ip_encryption]
+algorithm = "ipcrypt-nd"   
+key       = "927f8883c4e5e334af5c837bab8d6f06"
+
 
 ###############################################################################
 #                            Monitoring UI                                     #
@@ -230,23 +375,22 @@ prefix = ['64:ff9b::/96']
 enabled = true
 
 ## Listen address for the monitoring UI
-listen_address = "127.0.0.1:8080"
+listen_address = "127.0.0.1:8182"
 
-## Enable query logging in the monitoring UI
+username = ""
+password = ""
+
+## This will show recent queries in the UI
 enable_query_log = true
 
 ## Privacy level for the monitoring UI
 ## 0: show all details including client IPs
 ## 1: anonymize client IPs (default)
 ## 2: aggregate data only (no individual queries or domains shown)
-privacy_level = 1
+privacy_level = 2
 
 ## Default: 100
 max_query_log_entries = 100
 
 ## Default: 1
-max_memory_mb = 1
-
-username = ""
-password = ""
-
+max_memory_mb = 2
