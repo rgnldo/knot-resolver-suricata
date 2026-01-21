@@ -155,10 +155,10 @@ cache_neg_max_ttl = 600
 
 [local_doh]
 
-listen_addresses = ['0.0.0.0:3000']
-path           = '/dns-query'
-cert_file      = 'localhost.pem'
-cert_key_file  = 'localhost.pem'
+# listen_addresses = ['0.0.0.0:3000']
+# path           = '/dns-query'
+# cert_file      = 'localhost.pem'
+# cert_key_file  = 'localhost.pem'
 
 ############################
 #    blocklists            #
